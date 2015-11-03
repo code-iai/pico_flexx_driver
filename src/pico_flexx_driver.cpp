@@ -431,7 +431,7 @@ private:
     priv_nh.param("automatic_exposure", automaticExposure, true);
     priv_nh.param("exposure_time", exposureTime, 1000);
     priv_nh.param("max_noise", max_noise, 0.7);
-    priv_nh.param("mono_range_factor", range_factor, 2.0);
+    priv_nh.param("range_factor", range_factor, 2.0);
     priv_nh.param("use_png", png, false);
     priv_nh.param("jpeg_quality", jpegQuality, 90);
     priv_nh.param("png_level", pngLevel, 1);
@@ -447,7 +447,7 @@ private:
              << "automatic_exposure: " FG_CYAN << (automaticExposure ? "true" : "false") << NO_COLOR << std::endl
              << "     exposure_time: " FG_CYAN << exposureTime << NO_COLOR << std::endl
              << "         max_noise: " FG_CYAN << maxNoise << " meters" NO_COLOR << std::endl
-             << " mono_range_factor: " FG_CYAN << rangeFactor << NO_COLOR << std::endl
+             << "      range_factor: " FG_CYAN << rangeFactor << NO_COLOR << std::endl
              << "           use_png: " FG_CYAN << (png ? "true" : "false") << NO_COLOR << std::endl
              << "      jpeg_quality: " FG_CYAN << jpegQuality << NO_COLOR << std::endl
              << "         png_level: " FG_CYAN << pngLevel << NO_COLOR << std::endl

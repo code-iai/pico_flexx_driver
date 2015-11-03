@@ -9,7 +9,6 @@
 - [Dependencies](#dependencies)
 - [Install](#install)
 - [Usage](#usage)
-- [Topics](#topics)
 
 ## Description
 
@@ -44,7 +43,7 @@ sudo ./install_libroyale.sh <path to extracted linux 64 bit archive>
 
 To start the pico flexx driver, please use the provided launch file: `roslaunch pico_flexx_driver pico_flexx_driver.launch`
 
-### Parameters
+#### Parameters
 
 The launch file has the following paramters:
 
@@ -60,6 +59,8 @@ The launch file has the following paramters:
   Exposure time. Only for manual exposure.
 - `max_noise` (default="0.07"):
   Maximum allowed noise. Data with higher noise will be filtered out.
+- `range_factor` (default="2.0"):
+  Range of the 16-Bit mono image which should be mapped to the 0-255 range of the 8-Bit mono image. The resulting range is `range_factor` times the standard deviation arround mean.
 - `use_png` (default="false"):
   Use PNG instead of TIFF compression for 16 Bit images (depth, mono16 and noise).
 - `jpeg_quality` (default="90"):
@@ -81,7 +82,7 @@ The launch file has the following paramters:
 - `start_manager` (default="true"/>
   Whether to start a nodelet manager our not. Disable this if a different nodelet manager should be used.
 
-## Dynamic reconfigure
+#### Dynamic reconfigure
 
 Some parameters can be reconfigured during runtime, for example with `rosrun rqt_reconfigure rqt_reconfigure`. The reconfigureable parameters are:
 - `operation_mode`:
@@ -92,6 +93,8 @@ Some parameters can be reconfigured during runtime, for example with `rosrun rqt
   Exposure time. Only for manual exposure.
 - `max_noise`:
   Maximum allowed noise. Data with higher noise will be filtered out.
+- `range_factor`:
+  Range of the 16-Bit mono image which should be mapped to the 0-255 range of the 8-Bit mono image. The resulting range is `range_factor` times the standard deviation arround mean.
 - `compression`:
   `PNG` or `TIFF`.
 - `jpeg_quality`:
@@ -99,7 +102,7 @@ Some parameters can be reconfigured during runtime, for example with `rosrun rqt
 - `png_level`:
   PNG compression level. Only used if TIFF is not used.
 
-## Topics
+#### Topics
 
 `/pico_flexx/camera_info`:
 This topic publishes the camera intrinsic parameters.
