@@ -14,7 +14,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>cv_bridge</depend>
   <depend>nodelet</depend>
   <depend>roscpp</depend>
   <depend>rostime</depend>
@@ -23,6 +22,6 @@
   <depend>dynamic_reconfigure</depend>
 
   <export>
-  <nodelet plugin="${prefix}/nodelet_plugins.xml" />
+    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
 </package>

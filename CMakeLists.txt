@@ -23,7 +23,6 @@ set(CMAKE_MODULE_PATH   ${PROJECT_SOURCE_DIR}/cmake)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
-  cv_bridge
   nodelet
   roscpp
   rostime
@@ -33,7 +32,6 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(OpenCV REQUIRED)
 find_package(royale REQUIRED)
 
 ################################################
@@ -70,14 +68,12 @@ add_custom_target(additional_files_${PROJECT_NAME}
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIR}
   ${royale_INCLUDE_DIR}
 )
 
 add_library(pico_flexx_nodelet SHARED src/pico_flexx_driver.cpp)
 target_link_libraries(pico_flexx_nodelet
   ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
   ${royale_LIBRARIES}
 )
 add_dependencies(pico_flexx_nodelet ${PROJECT_NAME}_gencfg)
@@ -85,7 +81,6 @@ add_dependencies(pico_flexx_nodelet ${PROJECT_NAME}_gencfg)
 add_executable(pico_flexx_driver src/pico_flexx_driver.cpp)
 target_link_libraries(pico_flexx_driver
   ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
   ${royale_LIBRARIES}
 )
 add_dependencies(pico_flexx_driver ${PROJECT_NAME}_gencfg)

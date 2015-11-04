@@ -20,7 +20,6 @@ A launch file with static TF publisher, nodelet manager and machine tag support 
 ## Dependencies
 
 - ROS Indigo (or newer should also work)
-- OpenCV (2.4.x, using the one from the official Ubuntu repositories is recommended)
 - [libroyale](http://www.pmdtec.com/picoflexx/) (1.0.5.40 or newer)
 
 ## Install
@@ -61,12 +60,6 @@ The launch file has the following paramters:
   Maximum allowed noise. Data with higher noise will be filtered out.
 - `range_factor` (default="2.0"):
   Range of the 16-Bit mono image which should be mapped to the 0-255 range of the 8-Bit mono image. The resulting range is `range_factor` times the standard deviation arround mean.
-- `use_png` (default="false"):
-  Use PNG instead of TIFF compression for 16 Bit images (depth, mono16 and noise).
-- `jpeg_quality` (default="90"):
-  JPEG quality setting for 8 Bit image compression (mono8).
-- `png_level` (default="1"):
-  PNG compression level. Only used if TIFF is not used.
 - `queue_size` (default="5"):
   Queue size for publisher.
 - `publish_tf` (default="false"):
@@ -95,42 +88,30 @@ Some parameters can be reconfigured during runtime, for example with `rosrun rqt
   Maximum allowed noise. Data with higher noise will be filtered out.
 - `range_factor`:
   Range of the 16-Bit mono image which should be mapped to the 0-255 range of the 8-Bit mono image. The resulting range is `range_factor` times the standard deviation arround mean.
-- `compression`:
-  `PNG` or `TIFF`.
-- `jpeg_quality`:
-  JPEG quality setting for 8 Bit image compression (mono8).
-- `png_level`:
-  PNG compression level. Only used if TIFF is not used.
 
 #### Topics
 
 `/pico_flexx/camera_info`:
+Bandwidth: 0.37 KB per message (@5 Hz: ~2 KB/s, @45 Hz: ~ 17 KB/s)
 This topic publishes the camera intrinsic parameters.
 
 `/pico_flexx/image_depth`:
+Bandwidth: 153.28 KB per message (@5 Hz: ~766 KB/s, @45 Hz: ~ 6897 KB/s)
 This is the undistorted depth image. It is a 16-Bit image where each pixel is a distance measured in millimeters.
 
-`/pico_flexx/image_depth/compressed`:
-Compressed version of the depth image. Compatible to the image_transport package.
-
 `/pico_flexx/image_mono16`:
+Bandwidth: 76.67 KB per message (@5 Hz: ~383 KB/s, @45 Hz: ~ 3450 KB/s)
 This is the undistorted IR image. It is a 16-Bit image where each pixel is an intensity measurement.
 
-`/pico_flexx/image_mono16/compressed`:
-Compressed version of the mono16 image. Compatible to the image_transport package.
-
 `/pico_flexx/image_mono8`:
+Bandwidth: 38.37 KB per message (@5 Hz: ~192 KB/s, @45 Hz: ~ 1727 KB/s)
 This is the undistorted IR image. It is a 8-Bit image where each pixel is an intensity measurement.
 
-`/pico_flexx/image_mono8/compressed`:
-Compressed version of the mono8 image. Compatible to the image_transport package.
-
 `/pico_flexx/image_noise`:
+Bandwidth: 153.28 KB per message (@5 Hz: ~766 KB/s, @45 Hz: ~ 6897 KB/s)
 This is the undistorted noise image. It is a 16-Bit image where each pixel is a noise value of the corresponding depth pixel measured in 0.01 millimeters.
 
-`/pico_flexx/image_noise/compressed`:
-Compressed version of the noise image. Compatible to the image_transport package.
-
 `/pico_flexx/points`:
-This is the point cloud created by the sensor. It contains 5 fields, X, Y, Z, Intensity (16-Bit), Noise (16-Bit).
+Bandwidth: 770 KB per message (@5 Hz: ~3850 KB/s, @45 Hz: ~ 34650 KB/s)
+This is the point cloud created by the sensor. It contains 6 fields, X, Y, Z, Noise (float), Intensity (16-Bit), Gray (8-Bit).
 The X, Y, Z coordinates are undistorted. The point cloud is organized, so that the each point belongs to the pixel with the same index in one of the other images.

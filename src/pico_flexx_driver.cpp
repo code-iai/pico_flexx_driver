@@ -26,18 +26,13 @@
 #include <condition_variable>
 #include <chrono>
 
-#include <opencv2/opencv.hpp>
-
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <nodelet/nodelet.h>
 
-#include <cv_bridge/cv_bridge.h>
-
 #include <std_msgs/Header.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
-#include <sensor_msgs/CompressedImage.h>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud2.h>
 
@@ -55,7 +50,6 @@
 #define PF_TOPIC_DEPTH      "/image_depth"
 #define PF_TOPIC_NOISE      "/image_noise"
 #define PF_TOPIC_CLOUD      "/points"
-#define PF_TOPIC_COMPRESSED "/compressed"
 
 // fix for royale sdk definitions
 #undef __PRETTY_FUNCTION__
@@ -113,13 +107,9 @@ private:
   {
     CAMERA_INFO = 0,
     MONO_8,
-    MONO_8_COMP,
     MONO_16,
-    MONO_16_COMP,
     DEPTH,
-    DEPTH_COMP,
     NOISE,
-    NOISE_COMP,
     CLOUD,
     COUNT
   };
@@ -139,8 +129,7 @@ private:
   std::condition_variable cvNewData;
   bool running, newData;
   uint64_t frame, framesPerTiming, processTime, delayReceived;
-  std::string baseNameTF, compression16BitExt, compression16BitString;
-  std::vector<int> compressionParameter;
+  std::string baseNameTF;
   std::chrono::high_resolution_clock::time_point startTime;
   std::vector<uint32_t> exposureTimes;
   float maxNoise;
@@ -165,27 +154,18 @@ public:
     config.exposure_time = 1000;
     config.max_noise = 0.07;
     config.range_factor = 2.0;
-    config.compression = 0;
-    config.png_level = 1;
-    config.jpeg_quality = 90;
 
     configMin.operation_mode = 0;
     configMin.exposure_mode = 0;
     configMin.exposure_time = 50;
     configMin.max_noise = 0.0;
     configMin.range_factor = 0.0;
-    configMin.compression = 0;
-    configMin.png_level = 0;
-    configMin.jpeg_quality = 0;
 
     configMax.operation_mode = 5;
     configMax.exposure_mode = 1;
     configMax.exposure_time = 2000;
     configMax.max_noise = 0.10;
     configMax.range_factor = 7.0;
-    configMax.compression = 1;
-    configMax.png_level = 9;
-    configMax.jpeg_quality = 100;
   }
 
   ~PicoFlexx()
@@ -364,42 +344,6 @@ public:
       lockStatus.unlock();
     }
 
-    if(level & 0x20)
-    {
-      OUT_INFO("reconfigured compression: " << FG_CYAN << (config.compression == 0 ? "TIFF" : "PNG"));
-      lockStatus.lock();
-      if(config.compression)
-      {
-        compression16BitExt = ".png";
-        compression16BitString = sensor_msgs::image_encodings::TYPE_16UC1 + "; png compressed";
-      }
-      else
-      {
-        compression16BitExt = ".tif";
-        compression16BitString = sensor_msgs::image_encodings::TYPE_16UC1 + "; tiff compressed";
-      }
-      this->config.compression = config.compression;
-      lockStatus.unlock();
-    }
-
-    if(level & 0x40)
-    {
-      OUT_INFO("reconfigured jpeg_quality: " << FG_CYAN << config.jpeg_quality << NO_COLOR);
-      lockStatus.lock();
-      compressionParameter[1] = config.jpeg_quality;
-      this->config.jpeg_quality = config.jpeg_quality;
-      lockStatus.unlock();
-    }
-
-    if(level & 0x80)
-    {
-      OUT_INFO("reconfigured png_level: " << FG_CYAN << config.png_level << NO_COLOR);
-      lockStatus.lock();
-      compressionParameter[3] = config.png_level;
-      this->config.png_level = config.png_level;
-      lockStatus.unlock();
-    }
-
     if(level & 0x01 || level & 0x02)
     {
       const royale::Pair<uint32_t, uint32_t> limits = cameraDevice->getExposureLimits();
@@ -420,8 +364,8 @@ private:
       return false;
     }
 
-    bool automaticExposure, png;
-    int32_t operationMode, exposureTime, jpegQuality, pngLevel, queueSize;
+    bool automaticExposure;
+    int32_t operationMode, exposureTime, queueSize;
     std::string sensor, baseName;
     double max_noise, range_factor;
 
@@ -432,9 +376,6 @@ private:
     priv_nh.param("exposure_time", exposureTime, 1000);
     priv_nh.param("max_noise", max_noise, 0.7);
     priv_nh.param("range_factor", range_factor, 2.0);
-    priv_nh.param("use_png", png, false);
-    priv_nh.param("jpeg_quality", jpegQuality, 90);
-    priv_nh.param("png_level", pngLevel, 1);
     priv_nh.param("queue_size", queueSize, 2);
     priv_nh.param("base_name_tf", baseNameTF, baseName);
     maxNoise = (float)max_noise;
@@ -448,9 +389,6 @@ private:
              << "     exposure_time: " FG_CYAN << exposureTime << NO_COLOR << std::endl
              << "         max_noise: " FG_CYAN << maxNoise << " meters" NO_COLOR << std::endl
              << "      range_factor: " FG_CYAN << rangeFactor << NO_COLOR << std::endl
-             << "           use_png: " FG_CYAN << (png ? "true" : "false") << NO_COLOR << std::endl
-             << "      jpeg_quality: " FG_CYAN << jpegQuality << NO_COLOR << std::endl
-             << "         png_level: " FG_CYAN << pngLevel << NO_COLOR << std::endl
              << "        queue_size: " FG_CYAN << queueSize << NO_COLOR << std::endl
              << "      base_name_tf: " FG_CYAN << baseNameTF << NO_COLOR);
 
@@ -477,17 +415,13 @@ private:
       return false;
     }
 
-    setCompression(jpegQuality, pngLevel, png);
     setTopics(baseName, queueSize);
 
-    config.compression = png ? 1 : 0;
     config.operation_mode = operationMode;
     config.exposure_mode = automaticExposure ? 0 : 1;
     config.exposure_time = exposureTime;
     config.max_noise = (float)maxNoise;
     config.range_factor = (float)rangeFactor;
-    config.png_level = pngLevel;
-    config.jpeg_quality = jpegQuality;
 
     const royale::Pair<uint32_t, uint32_t> limits = cameraDevice->getExposureLimits();
     configMin.exposure_time = limits.first;
@@ -504,42 +438,15 @@ private:
     return true;
   }
 
-  void setCompression(const int32_t jpegQuality, const int32_t pngLevel, const bool png)
-  {
-    compressionParameter.resize(7, 0);
-    compressionParameter[0] = CV_IMWRITE_JPEG_QUALITY;
-    compressionParameter[1] = jpegQuality;
-    compressionParameter[2] = CV_IMWRITE_PNG_COMPRESSION;
-    compressionParameter[3] = pngLevel;
-    compressionParameter[4] = CV_IMWRITE_PNG_STRATEGY;
-    compressionParameter[5] = CV_IMWRITE_PNG_STRATEGY_RLE;
-    compressionParameter[6] = 0;
-
-    if(png)
-    {
-      compression16BitExt = ".png";
-      compression16BitString = sensor_msgs::image_encodings::TYPE_16UC1 + "; png compressed";
-    }
-    else
-    {
-      compression16BitExt = ".tif";
-      compression16BitString = sensor_msgs::image_encodings::TYPE_16UC1 + "; tiff compressed";
-    }
-  }
-
   void setTopics(const std::string &baseName, const int32_t queueSize)
   {
     publisher.resize(COUNT);
     ros::SubscriberStatusCallback cb = boost::bind(&PicoFlexx::callbackTopicStatus, this);
     publisher[CAMERA_INFO] = nh.advertise<sensor_msgs::CameraInfo>(baseName + PF_TOPIC_INFO, queueSize, cb, cb);
     publisher[MONO_8] = nh.advertise<sensor_msgs::Image>(baseName + PF_TOPIC_MONO8, queueSize, cb, cb);
-    publisher[MONO_8_COMP] = nh.advertise<sensor_msgs::CompressedImage>(baseName + PF_TOPIC_MONO8 PF_TOPIC_COMPRESSED, queueSize, cb, cb);
     publisher[MONO_16] = nh.advertise<sensor_msgs::Image>(baseName + PF_TOPIC_MONO16, queueSize, cb, cb);
-    publisher[MONO_16_COMP] = nh.advertise<sensor_msgs::CompressedImage>(baseName + PF_TOPIC_MONO16 PF_TOPIC_COMPRESSED, queueSize, cb, cb);
     publisher[DEPTH] = nh.advertise<sensor_msgs::Image>(baseName + PF_TOPIC_DEPTH, queueSize, cb, cb);
-    publisher[DEPTH_COMP] = nh.advertise<sensor_msgs::CompressedImage>(baseName + PF_TOPIC_DEPTH PF_TOPIC_COMPRESSED, queueSize, cb, cb);
     publisher[NOISE] = nh.advertise<sensor_msgs::Image>(baseName + PF_TOPIC_NOISE, queueSize, cb, cb);
-    publisher[NOISE_COMP] = nh.advertise<sensor_msgs::CompressedImage>(baseName + PF_TOPIC_NOISE PF_TOPIC_COMPRESSED, queueSize, cb, cb);
     publisher[CLOUD] = nh.advertise<sensor_msgs::PointCloud2>(baseName + PF_TOPIC_CLOUD, queueSize, cb, cb);
   }
 
@@ -823,13 +730,13 @@ private:
     cameraInfo.P[1] = 0;
     cameraInfo.P[2] = params.principalPoint.first;
     cameraInfo.P[3] = 0;
-    cameraInfo.P[4] = params.focalLength.second;
-    cameraInfo.P[5] = params.principalPoint.second;
-    cameraInfo.P[6] = 0;
+    cameraInfo.P[4] = 0;
+    cameraInfo.P[5] = params.focalLength.second;
+    cameraInfo.P[6] = params.principalPoint.second;
     cameraInfo.P[7] = 0;
-    cameraInfo.P[8] = 1;
+    cameraInfo.P[8] = 0;
     cameraInfo.P[9] = 0;
-    cameraInfo.P[10] = 0;
+    cameraInfo.P[10] = 1;
     cameraInfo.P[11] = 0;
 
     cameraInfo.distortion_model = "plumb_bob";
@@ -848,7 +755,6 @@ private:
     std::unique_ptr<royale::DepthData> data;
     sensor_msgs::CameraInfoPtr msgCameraInfo;
     sensor_msgs::ImagePtr msgMono8, msgMono16, msgDepth, msgNoise;
-    sensor_msgs::CompressedImagePtr msgMono8Compressed, msgMono16Compressed, msgDepthCompressed, msgNoiseCompressed;
     sensor_msgs::PointCloud2Ptr msgCloud;
 
     msgCameraInfo = sensor_msgs::CameraInfoPtr(new sensor_msgs::CameraInfo);
@@ -856,10 +762,6 @@ private:
     msgMono16 = sensor_msgs::ImagePtr(new sensor_msgs::Image);
     msgDepth = sensor_msgs::ImagePtr(new sensor_msgs::Image);
     msgNoise = sensor_msgs::ImagePtr(new sensor_msgs::Image);
-    msgMono8Compressed = sensor_msgs::CompressedImagePtr(new sensor_msgs::CompressedImage);
-    msgMono16Compressed = sensor_msgs::CompressedImagePtr(new sensor_msgs::CompressedImage);
-    msgDepthCompressed = sensor_msgs::CompressedImagePtr(new sensor_msgs::CompressedImage);
-    msgNoiseCompressed = sensor_msgs::CompressedImagePtr(new sensor_msgs::CompressedImage);
     msgCloud = sensor_msgs::PointCloud2Ptr(new sensor_msgs::PointCloud2);
 
     std::chrono::high_resolution_clock::time_point start, end;
@@ -877,10 +779,8 @@ private:
       lock.unlock();
 
       lockStatus.lock();
-      extractData(*data, msgCameraInfo, msgCloud, msgMono16, msgDepth, msgNoise);
-      computeMono8(msgMono16, msgMono8);
-      compressImages(msgMono8, msgMono16, msgDepth, msgNoise, msgMono8Compressed, msgMono16Compressed, msgDepthCompressed, msgNoiseCompressed);
-      publish(msgCameraInfo, msgCloud, msgMono8, msgMono16, msgDepth, msgNoise, msgMono8Compressed, msgMono16Compressed, msgDepthCompressed, msgNoiseCompressed);
+      extractData(*data, msgCameraInfo, msgCloud, msgMono8, msgMono16, msgDepth, msgNoise);
+      publish(msgCameraInfo, msgCloud, msgMono8, msgMono16, msgDepth, msgNoise);
       lockStatus.unlock();
 
       end = std::chrono::high_resolution_clock::now();
@@ -895,7 +795,7 @@ private:
   }
 
   void extractData(const royale::DepthData &data, sensor_msgs::CameraInfoPtr &msgCameraInfo, sensor_msgs::PointCloud2Ptr &msgCloud,
-                   sensor_msgs::ImagePtr &msgMono16, sensor_msgs::ImagePtr &msgDepth, sensor_msgs::ImagePtr &msgNoise) const
+                   sensor_msgs::ImagePtr &msgMono8, sensor_msgs::ImagePtr &msgMono16, sensor_msgs::ImagePtr &msgDepth, sensor_msgs::ImagePtr &msgNoise) const
   {
     std_msgs::Header header;
     header.frame_id = baseNameTF + PF_TF_OPT_FRAME;
@@ -910,7 +810,7 @@ private:
       msgCameraInfo->width = data.width;
     }
 
-    if(!(status[MONO_8] || status[MONO_8_COMP] || status[MONO_16] || status[MONO_16_COMP] || status[DEPTH] || status[DEPTH_COMP] || status[NOISE] || status[NOISE_COMP] || status[CLOUD]))
+    if(!(status[MONO_8] || status[MONO_16] || status[DEPTH] || status[NOISE] || status[CLOUD]))
     {
       return;
     }
@@ -919,7 +819,7 @@ private:
     msgMono16->height = data.height;
     msgMono16->width = data.width;
     msgMono16->is_bigendian = false;
-    msgMono16->encoding = sensor_msgs::image_encodings::TYPE_16UC1;
+    msgMono16->encoding = sensor_msgs::image_encodings::MONO16;
     msgMono16->step = (uint32_t)(sizeof(uint16_t) * data.width);
     msgMono16->data.resize(sizeof(uint16_t) * data.points.size());
 
@@ -927,91 +827,91 @@ private:
     msgDepth->height = data.height;
     msgDepth->width = data.width;
     msgDepth->is_bigendian = false;
-    msgDepth->encoding = sensor_msgs::image_encodings::TYPE_16UC1;
-    msgDepth->step = (uint32_t)(sizeof(uint16_t) * data.width);
-    msgDepth->data.resize(sizeof(uint16_t) * data.points.size());
+    msgDepth->encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+    msgDepth->step = (uint32_t)(sizeof(float) * data.width);
+    msgDepth->data.resize(sizeof(float) * data.points.size());
 
-    msgNoise->encoding = sensor_msgs::image_encodings::TYPE_16UC1;
     msgNoise->header = header;
     msgNoise->height = data.height;
     msgNoise->width = data.width;
     msgNoise->is_bigendian = false;
-    msgNoise->step = (uint32_t)(sizeof(uint16_t) * data.width);
-    msgNoise->data.resize(sizeof(uint16_t) * data.points.size());
+    msgNoise->encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+    msgNoise->step = (uint32_t)(sizeof(float) * data.width);
+    msgNoise->data.resize(sizeof(float) * data.points.size());
 
     msgCloud->header = header;
     msgCloud->height = data.height;
     msgCloud->width = data.width;
     msgCloud->is_bigendian = false;
     msgCloud->is_dense = false;
-    msgCloud->point_step = (uint32_t)(4 * sizeof(float));
-    msgCloud->row_step = (uint32_t)(4 * sizeof(float) * data.width);
-    msgCloud->fields.resize(5);
+    msgCloud->point_step = (uint32_t)(5 * sizeof(float));
+    msgCloud->row_step = (uint32_t)(5 * sizeof(float) * data.width);
+    msgCloud->fields.resize(6);
     msgCloud->fields[0].name = "x";
-    msgCloud->fields[0].offset = 0 * sizeof(float);
+    msgCloud->fields[0].offset = 0;
     msgCloud->fields[0].datatype = sensor_msgs::PointField::FLOAT32;
     msgCloud->fields[0].count = 1;
     msgCloud->fields[1].name = "y";
-    msgCloud->fields[1].offset = 1 * sizeof(float);
+    msgCloud->fields[1].offset = msgCloud->fields[0].offset + sizeof(float);
     msgCloud->fields[1].datatype = sensor_msgs::PointField::FLOAT32;
     msgCloud->fields[1].count = 1;
     msgCloud->fields[2].name = "z";
-    msgCloud->fields[2].offset = (uint32_t)(2 * sizeof(float));
+    msgCloud->fields[2].offset = msgCloud->fields[1].offset + sizeof(float);
     msgCloud->fields[2].datatype = sensor_msgs::PointField::FLOAT32;
     msgCloud->fields[2].count = 1;
-    msgCloud->fields[3].name = "intensity";
-    msgCloud->fields[3].offset = (uint32_t)(3 * sizeof(float));
-    msgCloud->fields[3].datatype = sensor_msgs::PointField::UINT16;
+    msgCloud->fields[3].name = "noise";
+    msgCloud->fields[3].offset = msgCloud->fields[2].offset + sizeof(float);
+    msgCloud->fields[3].datatype = sensor_msgs::PointField::FLOAT32;
     msgCloud->fields[3].count = 1;
-    msgCloud->fields[4].name = "noise";
-    msgCloud->fields[4].offset = (uint32_t)(3 * sizeof(float) + sizeof(uint16_t));
+    msgCloud->fields[4].name = "intensity";
+    msgCloud->fields[4].offset = msgCloud->fields[3].offset + sizeof(float);
     msgCloud->fields[4].datatype = sensor_msgs::PointField::UINT16;
     msgCloud->fields[4].count = 1;
-    msgCloud->data.resize(4 * sizeof(float) * data.points.size());
+    msgCloud->fields[5].name = "gray";
+    msgCloud->fields[5].offset = msgCloud->fields[4].offset + sizeof(uint16_t);
+    msgCloud->fields[5].datatype = sensor_msgs::PointField::UINT8;
+    msgCloud->fields[5].count = 1;
+    msgCloud->data.resize(5 * sizeof(float) * data.points.size());
 
     const float invalid = std::numeric_limits<float>::quiet_NaN();
     const royale::DepthPoint *itI = &data.points[0];
     float *itCX = (float *)&msgCloud->data[0];
     float *itCY = itCX + 1;
     float *itCZ = itCY + 1;
-    uint16_t *itCM = (uint16_t *)(itCZ + 1);
-    uint16_t *itCN = itCM + 1;
-    uint16_t *itD = (uint16_t *)&msgDepth->data[0];
-    uint16_t *itN = (uint16_t *)&msgNoise->data[0];
+    float *itCN = itCZ + 1;
+    uint16_t *itCM = (uint16_t *)(itCN + 1);
+    float *itD = (float *)&msgDepth->data[0];
+    float *itN = (float *)&msgNoise->data[0];
     uint16_t *itM = (uint16_t *)&msgMono16->data[0];
-    for(size_t i = 0; i < data.points.size(); ++i, ++itI, itCX += 4, itCY += 4, itCZ += 4, itCM += 8, itCN += 8, ++itD, ++itM, ++itN)
+    for(size_t i = 0; i < data.points.size(); ++i, ++itI, itCX += 5, itCY += 5, itCZ += 5, itCN += 5, itCM += 10, ++itD, ++itM, ++itN)
     {
       if(itI->depthConfidence && itI->noise < maxNoise)
       {
-        uint16_t noise = (uint16_t)(itI->noise * 100000.0f);
         *itCX = itI->x;
         *itCY = itI->y;
         *itCZ = itI->z;
-        *itCN = noise;
-        *itD = (uint16_t)(itI->z * 1000.0f);
-        *itN = noise;
+        *itCN = itI->noise;
+        *itD = itI->z;
+        *itN = itI->noise;
       }
       else
       {
         *itCX = invalid;
         *itCY = invalid;
         *itCZ = invalid;
-        *itCN = 0;
-        *itD = 0;
-        *itN = 0;
+        *itCN = 0.0f;
+        *itD = 0.0f;
+        *itN = 0.0f;
       }
       *itCM = itI->grayValue;
       *itM = itI->grayValue;
     }
+
+    computeMono8(msgMono16, msgMono8, msgCloud);
   }
 
-  void computeMono8(const sensor_msgs::ImageConstPtr &msgMono16, sensor_msgs::ImagePtr &msgMono8)
+  void computeMono8(const sensor_msgs::ImageConstPtr &msgMono16, sensor_msgs::ImagePtr &msgMono8, sensor_msgs::PointCloud2Ptr &msgCloud) const
   {
-    if(!status[MONO_8] && !status[MONO_8_COMP])
-    {
-      return;
-    }
-
     msgMono8->header = msgMono16->header;
     msgMono8->height = msgMono16->height;
     msgMono8->width = msgMono16->width;
@@ -1054,8 +954,9 @@ private:
     const uint16_t maxV = (uint16_t)std::min(average + rangeFactor * deviation, 65535.0) - minV;
     const double maxVF = 255.0 / (double)maxV;
     uint8_t *itO = pMono8;
+    uint8_t *itP = ((uint8_t *)&msgCloud->data[0]) + 18;
     itI = pMono16;
-    for(size_t i = 0; i < size; ++i, ++itI, ++itO)
+    for(size_t i = 0; i < size; ++i, ++itI, ++itO, itP += 20)
     {
       uint16_t v = *itI;
       if(v < minV)
@@ -1071,57 +972,15 @@ private:
         v = maxV;
       }
 
-      *itO = (uint8_t)((double)v * maxVF);
-    }
-  }
-
-  void compressImages(const sensor_msgs::ImageConstPtr &msgMono8, const sensor_msgs::ImageConstPtr &msgMono16,
-                      const sensor_msgs::ImageConstPtr &msgDepth, const sensor_msgs::ImageConstPtr &msgNoise,
-                      sensor_msgs::CompressedImagePtr &msgMono8Compressed, sensor_msgs::CompressedImagePtr &msgMono16Compressed,
-                      sensor_msgs::CompressedImagePtr &msgDepthCompressed, sensor_msgs::CompressedImagePtr &msgNoiseCompressed) const
-  {
-    if(status[MONO_8_COMP])
-    {
-      compress(msgMono8, msgMono8Compressed);
-    }
-
-    if(status[MONO_16_COMP])
-    {
-      compress(msgMono16, msgMono16Compressed);
-    }
-
-    if(status[DEPTH_COMP])
-    {
-      compress(msgDepth, msgDepthCompressed);
-    }
-
-    if(status[NOISE_COMP])
-    {
-      compress(msgNoise, msgNoiseCompressed);
-    }
-  }
-
-  void compress(const sensor_msgs::ImageConstPtr &msgImage, sensor_msgs::CompressedImagePtr &msgCompressed) const
-  {
-    cv_bridge::CvImageConstPtr image = cv_bridge::toCvShare(msgImage);
-    msgCompressed->header = msgImage->header;
-    if(msgImage->encoding == sensor_msgs::image_encodings::MONO8)
-    {
-      msgCompressed->format = sensor_msgs::image_encodings::MONO8 + "; jpeg compressed ";
-      cv::imencode(".jpg", image->image, msgCompressed->data, compressionParameter);
-    }
-    else
-    {
-      msgCompressed->format = compression16BitString;
-      cv::imencode(compression16BitExt, image->image, msgCompressed->data, compressionParameter);
+      const uint8_t newV = (uint8_t)((double)v * maxVF);
+      *itO = newV;
+      *itP = newV;
     }
   }
 
   void publish(sensor_msgs::CameraInfoPtr &msgCameraInfo, sensor_msgs::PointCloud2Ptr &msgCloud,
                sensor_msgs::ImagePtr &msgMono8, sensor_msgs::ImagePtr &msgMono16,
-               sensor_msgs::ImagePtr &msgDepth, sensor_msgs::ImagePtr &msgNoise,
-               sensor_msgs::CompressedImagePtr &msgMono8Compressed, sensor_msgs::CompressedImagePtr &msgMono16Compressed,
-               sensor_msgs::CompressedImagePtr &msgDepthCompressed, sensor_msgs::CompressedImagePtr &msgNoiseCompressed)
+               sensor_msgs::ImagePtr &msgDepth, sensor_msgs::ImagePtr &msgNoise) const
   {
     if(status[CAMERA_INFO])
     {
@@ -1133,40 +992,20 @@ private:
       publisher[MONO_8].publish(msgMono8);
       msgMono8 = sensor_msgs::ImagePtr(new sensor_msgs::Image);
     }
-    if(status[MONO_8_COMP])
-    {
-      publisher[MONO_8_COMP].publish(msgMono8Compressed);
-      msgMono8Compressed = sensor_msgs::CompressedImagePtr(new sensor_msgs::CompressedImage);
-    }
     if(status[MONO_16])
     {
       publisher[MONO_16].publish(msgMono16);
       msgMono16 = sensor_msgs::ImagePtr(new sensor_msgs::Image);
-    }
-    if(status[MONO_16_COMP])
-    {
-      publisher[MONO_16_COMP].publish(msgMono16Compressed);
-      msgMono16Compressed = sensor_msgs::CompressedImagePtr(new sensor_msgs::CompressedImage);
     }
     if(status[DEPTH])
     {
       publisher[DEPTH].publish(msgDepth);
       msgDepth = sensor_msgs::ImagePtr(new sensor_msgs::Image);
     }
-    if(status[DEPTH_COMP])
-    {
-      publisher[DEPTH_COMP].publish(msgDepthCompressed);
-      msgDepthCompressed = sensor_msgs::CompressedImagePtr(new sensor_msgs::CompressedImage);
-    }
     if(status[NOISE])
     {
       publisher[NOISE].publish(msgNoise);
       msgNoise = sensor_msgs::ImagePtr(new sensor_msgs::Image);
-    }
-    if(status[NOISE_COMP])
-    {
-      publisher[NOISE_COMP].publish(msgNoiseCompressed);
-      msgNoiseCompressed = sensor_msgs::CompressedImagePtr(new sensor_msgs::CompressedImage);
     }
     if(status[CLOUD])
     {
@@ -1194,8 +1033,8 @@ private:
       processTime = 0;
       startTime = now;
       delayReceived = 0;
-      OUT_INFO("processing: " FG_YELLOW "~" << timePerFrame << " ms." NO_COLOR
-               " publishing rate: " FG_YELLOW "~" << framesPerSecond << " Hz" NO_COLOR
+      OUT_INFO("processing: " FG_YELLOW "~" << std::setprecision(4) << timePerFrame << " ms." NO_COLOR
+               " fps: " FG_YELLOW "~" << framesPerSecond << " Hz" NO_COLOR
                " delay: " FG_YELLOW "~" << avgDelay << " ms." NO_COLOR);
     }
     ++frame;

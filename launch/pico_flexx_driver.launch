@@ -11,12 +11,6 @@
   <arg name="exposure_time"      default="1000"/>
   <!-- Maximum allowed noise. Data with higher noise will be filtered out. -->
   <arg name="max_noise"          default="0.07"/>
-  <!-- Use PNG instead of TIFF compression for 16 Bit images (depth, mono16 and noise). -->
-  <arg name="use_png"            default="false"/>
-  <!-- JPEG quality setting for 8 Bit image compression (mono8). -->
-  <arg name="jpeg_quality"       default="90"/>
-  <!-- PNG compression level. Only used if TIFF is not used. -->
-  <arg name="png_level"          default="1"/>
   <!-- Queue size for publisher. -->
   <arg name="queue_size"         default="5"/>
   <!-- Publish a static TF transform for the optical frame of the camera. -->
@@ -53,9 +47,6 @@
     <param name="automatic_exposure" type="bool"   value="$(arg automatic_exposure)"/>
     <param name="exposure_time"      type="int"    value="$(arg exposure_time)"/>
     <param name="max_noise"          type="double" value="$(arg max_noise)"/>
-    <param name="use_png"            type="bool"   value="$(arg use_png)"/>
-    <param name="jpeg_quality"       type="int"    value="$(arg jpeg_quality)"/>
-    <param name="png_level"          type="int"    value="$(arg png_level)"/>
     <param name="queue_size"         type="int"    value="$(arg queue_size)"/>
     <param name="base_name_tf"       type="str"    value="$(arg base_name_tf)"/>
   </node>
