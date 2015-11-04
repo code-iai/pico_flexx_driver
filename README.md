@@ -91,27 +91,33 @@ Some parameters can be reconfigured during runtime, for example with `rosrun rqt
 
 #### Topics
 
-`/pico_flexx/camera_info`:
+##### `/pico_flexx/camera_info`
 Bandwidth: 0.37 KB per message (@5 Hz: ~2 KB/s, @45 Hz: ~ 17 KB/s)
+
 This topic publishes the camera intrinsic parameters.
 
-`/pico_flexx/image_depth`:
+##### `/pico_flexx/image_depth`
 Bandwidth: 153.28 KB per message (@5 Hz: ~766 KB/s, @45 Hz: ~ 6897 KB/s)
+
 This is the undistorted depth image. It is a 16-Bit image where each pixel is a distance measured in millimeters.
 
-`/pico_flexx/image_mono16`:
+##### `/pico_flexx/image_mono16`
 Bandwidth: 76.67 KB per message (@5 Hz: ~383 KB/s, @45 Hz: ~ 3450 KB/s)
+
 This is the undistorted IR image. It is a 16-Bit image where each pixel is an intensity measurement.
 
-`/pico_flexx/image_mono8`:
+##### `/pico_flexx/image_mono8`
 Bandwidth: 38.37 KB per message (@5 Hz: ~192 KB/s, @45 Hz: ~ 1727 KB/s)
+
 This is the undistorted IR image. It is a 8-Bit image where each pixel is an intensity measurement.
 
-`/pico_flexx/image_noise`:
+##### `/pico_flexx/image_noise`
 Bandwidth: 153.28 KB per message (@5 Hz: ~766 KB/s, @45 Hz: ~ 6897 KB/s)
+
 This is the undistorted noise image. It is a 16-Bit image where each pixel is a noise value of the corresponding depth pixel measured in 0.01 millimeters.
 
-`/pico_flexx/points`:
+##### `/pico_flexx/points`
 Bandwidth: 770 KB per message (@5 Hz: ~3850 KB/s, @45 Hz: ~ 34650 KB/s)
+
 This is the point cloud created by the sensor. It contains 6 fields, X, Y, Z, Noise (float), Intensity (16-Bit), Gray (8-Bit).
 The X, Y, Z coordinates are undistorted. The point cloud is organized, so that the each point belongs to the pixel with the same index in one of the other images.
