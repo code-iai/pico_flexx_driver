@@ -39,7 +39,7 @@
 #include <royale.hpp>
 
 #include <dynamic_reconfigure/server.h>
-#include <pico_flexx_driver/PicoFlexxConfig.h>
+#include <pico_flexx_driver/pico_flexx_driverConfig.h>
 
 #define PF_DEFAULT_NS       "pico_flexx"
 #define PF_TF_LINK          "_link"
@@ -119,8 +119,8 @@ private:
   std::vector<ros::Publisher> publisher;
   std::vector<bool> status;
   boost::recursive_mutex lockServer;
-  dynamic_reconfigure::Server<pico_flexx_driver::PicoFlexxConfig> server;
-  pico_flexx_driver::PicoFlexxConfig configMin, configMax, config;
+  dynamic_reconfigure::Server<pico_flexx_driver::pico_flexx_driverConfig> server;
+  pico_flexx_driver::pico_flexx_driverConfig configMin, configMax, config;
 
   std::unique_ptr<royale::ICameraDevice> cameraDevice;
   std::unique_ptr<royale::DepthData> data;
@@ -286,7 +286,7 @@ public:
     lockStatus.unlock();
   }
 
-  void callbackConfig(pico_flexx_driver::PicoFlexxConfig &config, uint32_t level)
+  void callbackConfig(pico_flexx_driver::pico_flexx_driverConfig &config, uint32_t level)
   {
     if(level == 0xFFFFFFFF)
     {
@@ -431,7 +431,7 @@ private:
 
     server.setConfigDefault(config);
 
-    dynamic_reconfigure::Server<pico_flexx_driver::PicoFlexxConfig>::CallbackType f;
+    dynamic_reconfigure::Server<pico_flexx_driver::pico_flexx_driverConfig>::CallbackType f;
     f = boost::bind(&PicoFlexx::callbackConfig, this, _1, _2);
     server.setCallback(f);
 
