@@ -3,8 +3,8 @@
   <arg name="base_name"          default="pico_flexx"/>
   <!-- ID of the sensor that should be used. IDs of all connected devices are listed on startup. -->
   <arg name="sensor"             default=""/>
-  <!-- ID of the operation mode A list of supported modes is listed on startup. -->
-  <arg name="operation_mode"     default="0"/>
+  <!-- ID of the use case. A list of supported use cases is listed on startup. -->
+  <arg name="use_case"           default="0"/>
   <!-- Enable or disable automatic expusure. -->
   <arg name="automatic_exposure" default="true"/>
   <!-- Exposure time. Only for manual exposure. -->
@@ -32,7 +32,7 @@
   <machine name="localhost" address="localhost" if="$(arg define_machine)"/>
 
   <!-- Static TF publisher. -->
-  <node pkg="tf" type="static_transform_publisher" name="$(arg base_name)_static_tf"  machine="$(arg machine)" if="$(arg publish_tf)"
+  <node pkg="tf" type="static_transform_publisher" name="$(arg base_name)_static_tf" machine="$(arg machine)" if="$(arg publish_tf)"
         args="0 0 0 0 0 -1.57079632679489661923 $(arg base_name_tf)_link $(arg base_name_tf)_optical_frame 100" />
 
   <!-- Nodelet manager. -->
@@ -45,7 +45,7 @@
         respawn="true" output="screen">
     <param name="base_name"          type="str"    value="$(arg base_name)"/>
     <param name="sensor"             type="str"    value="$(arg sensor)"/>
-    <param name="operation_mode"     type="int"    value="$(arg operation_mode)"/>
+    <param name="use_case"           type="int"    value="$(arg use_case)"/>
     <param name="automatic_exposure" type="bool"   value="$(arg automatic_exposure)"/>
     <param name="exposure_time"      type="int"    value="$(arg exposure_time)"/>
     <param name="max_noise"          type="double" value="$(arg max_noise)"/>

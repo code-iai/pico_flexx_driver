@@ -20,7 +20,7 @@ A launch file with static TF publisher, nodelet manager and machine tag support 
 ## Dependencies
 
 - ROS Indigo (or newer should also work)
-- [libroyale](http://www.pmdtec.com/picoflexx/) (1.0.5.40 or newer)
+- [libroyale](http://www.pmdtec.com/picoflexx/) (1.2.0.48 or newer)
 
 ## Install
 
@@ -54,9 +54,9 @@ The launch file has the following paramters:
 
   ID of the sensor that should be used. IDs of all connected devices are listed on startup.
 
-- `operation_mode` (default="0"):
+- `use_case` (default="0"):
 
-  ID of the operation mode A list of supported modes is listed on startup.
+  ID of the use case. A list of supported use cases is listed on startup.
 
 - `automatic_exposure` (default="true"):
 
@@ -105,9 +105,9 @@ The launch file has the following paramters:
 #### Dynamic reconfigure
 
 Some parameters can be reconfigured during runtime, for example with `rosrun rqt_reconfigure rqt_reconfigure`. The reconfigureable parameters are:
-- `operation_mode`:
+- `use_case`:
 
-  Choose from a list of operation modes.
+  Choose from a list of use cases.
 
 - `exposure_mode`:
 

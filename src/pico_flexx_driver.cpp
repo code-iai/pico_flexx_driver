@@ -149,19 +149,19 @@ public:
     publisher.resize(COUNT);
     status.resize(COUNT, false);
 
-    config.operation_mode = 0;
+    config.use_case = 0;
     config.exposure_mode = 0;
     config.exposure_time = 1000;
     config.max_noise = 0.07;
     config.range_factor = 2.0;
 
-    configMin.operation_mode = 0;
+    configMin.use_case = 0;
     configMin.exposure_mode = 0;
     configMin.exposure_time = 50;
     configMin.max_noise = 0.0;
     configMin.range_factor = 0.0;
 
-    configMax.operation_mode = 5;
+    configMax.use_case = 5;
     configMax.exposure_mode = 1;
     configMax.exposure_time = 2000;
     configMax.max_noise = 0.10;
@@ -295,13 +295,13 @@ public:
 
     if(level & 0x01)
     {
-      OUT_INFO("reconfigured operation_mode: " << FG_CYAN << royale::getOperationModeName(static_cast<royale::OperationMode>(config.operation_mode)) << NO_COLOR);
-      if(!setOperationMode(config.operation_mode))
+      OUT_INFO("reconfigured use case: " << FG_CYAN << cameraDevice->getUseCases()[config.use_case] << NO_COLOR);
+      if(!setUseCase(config.use_case))
       {
-        config.operation_mode = this->config.operation_mode;
+        config.use_case = this->config.use_case;
         return;
       }
-      this->config.operation_mode = config.operation_mode;
+      this->config.use_case = config.use_case;
     }
 
     if(level & 0x02)
@@ -365,13 +365,13 @@ private:
     }
 
     bool automaticExposure;
-    int32_t operationMode, exposureTime, queueSize;
+    int32_t useCase, exposureTime, queueSize;
     std::string sensor, baseName;
     double max_noise, range_factor;
 
     priv_nh.param("base_name", baseName, std::string(PF_DEFAULT_NS));
     priv_nh.param("sensor", sensor, std::string(""));
-    priv_nh.param("operation_mode", operationMode, (int)royale::OperationMode::MODE_9_5FPS_2000);
+    priv_nh.param("use_case", useCase, 0);
     priv_nh.param("automatic_exposure", automaticExposure, true);
     priv_nh.param("exposure_time", exposureTime, 1000);
     priv_nh.param("max_noise", max_noise, 0.7);
@@ -384,7 +384,7 @@ private:
     OUT_INFO("parameter:" << std::endl
              << "         base_name: " FG_CYAN << baseName << NO_COLOR << std::endl
              << "            sensor: " FG_CYAN << (sensor.empty() ? "default" : sensor) << NO_COLOR << std::endl
-             << "    operation_mode: " FG_CYAN << operationMode << NO_COLOR << std::endl
+             << "          use_case: " FG_CYAN << useCase << NO_COLOR << std::endl
              << "automatic_exposure: " FG_CYAN << (automaticExposure ? "true" : "false") << NO_COLOR << std::endl
              << "     exposure_time: " FG_CYAN << exposureTime << NO_COLOR << std::endl
              << "         max_noise: " FG_CYAN << maxNoise << " meters" NO_COLOR << std::endl
@@ -394,7 +394,7 @@ private:
 
     royale::LensParameters params;
     if(!selectCamera(sensor)
-       || !setOperationMode(operationMode)
+       || !setUseCase(useCase)
        || !setExposureMode(automaticExposure)
        || (!automaticExposure && !setExposure(exposureTime))
        || !getCameraSettings(params)
@@ -417,7 +417,7 @@ private:
 
     setTopics(baseName, queueSize);
 
-    config.operation_mode = operationMode;
+    config.use_case = useCase;
     config.exposure_mode = automaticExposure ? 0 : 1;
     config.exposure_time = exposureTime;
     config.max_noise = (float)maxNoise;
@@ -507,52 +507,43 @@ private:
   bool getCameraSettings(royale::LensParameters &params)
   {
     bool ret = true;
-    std::string camera;
-    switch(cameraDevice->getCameraType())
-    {
-    case royale::CameraType::PICOS_STANDARD:
-      camera = "PicoS";
-      break;
-    case royale::CameraType::PICOFLEXX:
-      camera = "PicoFlexx";
-      break;
-    case royale::CameraType::EVALBOARD_LED_STANDARD:
-      camera = "EvalBoard";
-      break;
-    case royale::CameraType::PMD_PLATFORM:
-      camera = "FPGA";
-      break;
-    case royale::CameraType::CUSTOM:
-      camera = "Custom";
-      break;
-    case royale::CameraType::UNKNOWN:
-    default:
-      camera = "Unknown";
-      ret = false;
-    }
+    const royale::Vector<royale::String> &useCases = cameraDevice->getUseCases();
+    const royale::String &useCase = cameraDevice->getCurrentUseCase();
+    const royale::ExposureMode &expMode = cameraDevice->getExposureMode();
+    const royale::Pair<uint32_t, uint32_t> &limits = cameraDevice->getExposureLimits();
+    const royale::Vector<royale::Pair<royale::String,royale::String>> &info = cameraDevice->getCameraInfo();
 
-    const royale::Vector<royale::OperationMode> opModes = cameraDevice->getOperationModes();
-    const royale::OperationMode opMode = cameraDevice->getOperationMode();
-    const royale::ExposureMode expMode = cameraDevice->getExposureMode();
-    const royale::Pair<uint32_t, uint32_t> limits = cameraDevice->getExposureLimits();
-
-    OUT_INFO("camera type: " FG_CYAN << camera << NO_COLOR);
+    OUT_INFO("camera name: " FG_CYAN << cameraDevice->getCameraName() << NO_COLOR);
     OUT_INFO("camera id: " FG_CYAN << cameraDevice->getId() << NO_COLOR);
     OUT_INFO("access level: " FG_CYAN "L" << (int)cameraDevice->getAccessLevel() + 1 << NO_COLOR);
     OUT_INFO("exposure mode: " FG_CYAN << (expMode == royale::ExposureMode::AUTOMATIC ? "automatic" : "manual") << NO_COLOR);
     OUT_INFO("exposure limits: " FG_CYAN << limits.first << " / " << limits.second << NO_COLOR);
 
-    if(opModes.empty())
+    if(info.empty())
     {
-      OUT_ERROR("  no operation modes available!");
+      OUT_ERROR("  no camera info available!");
       ret = false;
     }
     else
     {
-      OUT_INFO("operation modes:");
-      for(size_t i = 0; i < opModes.size(); ++i)
+      OUT_INFO("camera info:");
+      for(size_t i = 0; i < info.size(); ++i)
       {
-        OUT_INFO("  " << (int)opModes[i] << ": " FG_CYAN << royale::getOperationModeName(opModes[i]) << (opModes[i] == opMode ? FG_YELLOW " (selected)" : "") << NO_COLOR);
+        OUT_INFO("  " << info[i].first << ": " FG_CYAN << info[i].second << NO_COLOR);
+      }
+    }
+
+    if(useCases.empty())
+    {
+      OUT_ERROR("  no use cases available!");
+      ret = false;
+    }
+    else
+    {
+      OUT_INFO("use cases:");
+      for(size_t i = 0; i < useCases.size(); ++i)
+      {
+        OUT_INFO("  " << i << ": " FG_CYAN << useCases[i] << (useCases[i] == useCase ? FG_YELLOW " (selected)" : "") << NO_COLOR);
       }
     }
 
@@ -587,45 +578,38 @@ private:
     return ret;
   }
 
-  bool setOperationMode(const int mode)
+  bool setUseCase(const int idx)
   {
-    const royale::Vector<royale::OperationMode> modes = cameraDevice->getOperationModes();
-    royale::OperationMode newMode = royale::OperationMode::MODE_INVALID;
+    const royale::Vector<royale::String> &useCases = cameraDevice->getUseCases();
+    const royale::String &useCase = cameraDevice->getCurrentUseCase();
 
-    if(modes.empty())
+    if(useCases.empty())
     {
-      OUT_ERROR("no operation modes available!");
+      OUT_ERROR("no use cases available!");
       return false;
     }
 
-    for(size_t i = 0; i < modes.size(); ++i)
+    if(idx >= useCases.size())
     {
-      if((int)modes[i] == mode)
-      {
-        newMode = modes[i];
-      }
-    }
-
-    if(newMode == royale::OperationMode::MODE_INVALID)
-    {
-      OUT_ERROR("operation mode invalid!");
+      OUT_ERROR("use case invalid!");
       return false;
     }
 
-    if(newMode == cameraDevice->getOperationMode())
+    if(useCases[idx] == useCase)
     {
-      OUT_INFO("operation mode not changed!");
+      OUT_INFO("use case not changed!");
       return true;
     }
 
-    if(cameraDevice->setOperationMode(newMode) != royale::CameraStatus::SUCCESS)
+    if(cameraDevice->setUseCase(useCases[idx]) != royale::CameraStatus::SUCCESS)
     {
-      OUT_ERROR("could not set operation mode!");
+      OUT_ERROR("could not set use case!");
       return false;
     }
-    std::string name = royale::getOperationModeName(newMode).toStdString();
-    OUT_INFO("operation mode changed to: " FG_YELLOW << name);
+    OUT_INFO("use case changed to: " FG_YELLOW << useCases[idx]);
 
+    std::string name;
+    useCases[idx].toStdString(name);
     size_t end = name.find("FPS");
     size_t start = name.rfind('_', end);
 
