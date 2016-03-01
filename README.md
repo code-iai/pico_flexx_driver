@@ -48,17 +48,19 @@ sudo cp libroyale-<version_number>-LINUX-64Bit/driver/udev/10-royale-ubuntu.rule
 8. Run `roslaunch pico_flexx_driver pico_flexx_driver.launch publish_tf:=true`
 9. Start `rosrun rviz rviz`, set the `Fixed frame` to `pico_flexx_link` and add a `PointCloud2` and select `/pico_flexx/points`
 
-*Note: The pico_flexx_driver automaticaly tries to use the most recent version that is extracted in `<catkin_ws>/src/pico_flexx_driver/royale`.
+*Note: The pico_flexx_driver automatically tries to use the most recent version that is extracted in `<catkin_ws>/src/pico_flexx_driver/royale`.
 To use a newer release just extract it to that directory in addition to the previous one and recompile it with `catkin_make clean` and `catkin_make`.
 If something does not work with a newer version, just delete the extracted directory and recompile it with `catkin_make clean` and `catkin_make`.*
 
 ## Usage
 
-To start the pico flexx driver, please use the provided launch file: `roslaunch pico_flexx_driver pico_flexx_driver.launch`
+To start the pico flexx driver, please use the provided launch file:
+
+`roslaunch pico_flexx_driver pico_flexx_driver.launch`
 
 #### Parameters
 
-The launch file has the following paramters:
+The launch file has the following parameters:
 
 - `base_name` (default="pico_flexx"):
 
@@ -74,7 +76,7 @@ The launch file has the following paramters:
 
 - `automatic_exposure` (default="true"):
 
-  Enable or disable automatic expusure.
+  Enable or disable automatic exposure.
 
 - `exposure_time` (default="1000"):
 
@@ -86,7 +88,7 @@ The launch file has the following paramters:
 
 - `range_factor` (default="2.0"):
 
-  Range of the 16-Bit mono image which should be mapped to the 0-255 range of the 8-Bit mono image. The resulting range is `range_factor` times the standard deviation arround mean.
+  Range of the 16-Bit mono image which should be mapped to the 0-255 range of the 8-Bit mono image. The resulting range is `range_factor` times the standard deviation around mean.
 
 - `queue_size` (default="5"):
 
@@ -118,7 +120,7 @@ The launch file has the following paramters:
 
 #### Dynamic reconfigure
 
-Some parameters can be reconfigured during runtime, for example with `rosrun rqt_reconfigure rqt_reconfigure`. The reconfigureable parameters are:
+Some parameters can be reconfigured during runtime, for example with `rosrun rqt_reconfigure rqt_reconfigure`. The reconfigurable parameters are:
 - `use_case`:
 
   Choose from a list of use cases.
@@ -137,7 +139,7 @@ Some parameters can be reconfigured during runtime, for example with `rosrun rqt
 
 - `range_factor`:
 
-  Range of the 16-Bit mono image which should be mapped to the 0-255 range of the 8-Bit mono image. The resulting range is `range_factor` times the standard deviation arround mean.
+  Range of the 16-Bit mono image which should be mapped to the 0-255 range of the 8-Bit mono image. The resulting range is `range_factor` times the standard deviation around mean.
 
 #### Topics
 
@@ -170,4 +172,4 @@ This is the distorted noise image. It is a 32-Bit float image where each pixel i
 Bandwidth: 770 KB per message (@5 Hz: ~3850 KB/s, @45 Hz: ~ 34650 KB/s)
 
 This is the point cloud created by the sensor. It contains 6 fields in the following order: X, Y, Z, Noise (float), Intensity (16-Bit), Gray (8-Bit).
-The 3D points themself are undistorted, while the 2D coordinates of the points are distorted. The point cloud is organized, so that the each point belongs to the pixel with the same index in one of the other images.
+The 3D points themselves are undistorted, while the 2D coordinates of the points are distorted. The point cloud is organized, so that the each point belongs to the pixel with the same index in one of the other images.
