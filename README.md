@@ -13,30 +13,42 @@
 ## Description
 
 This package is a ROS interface to the [CamBoard pico flexx](http://www.pmdtec.com/picoflexx/) from pmd.
-The included node publishes the point cloud, camera info, depth, ir and noise images on ROS topics.
-It supports dynamic reconfigure and nodelets with zero copy transfers.
-A launch file with static TF publisher, nodelet manager and machine tag support is included.
+
+Features:
+- publishing point clouds, camera info, depth, ir and noise images on ROS topics
+- support for dynamic reconfigure
+- support for nodelets with zero copy transfers
+- a launch file with nodelet manager and machine tag support
+- optional static TF publisher
 
 ## Dependencies
 
 - ROS Indigo (or newer should also work)
-- [libroyale](http://www.pmdtec.com/picoflexx/) (1.2.0.48 or newer)
+- [Royale SDK](http://www.pmdtec.com/picoflexx/) (1.2.0.48, 1.3.0.51 or newer)
 
 ## Install
 
 1. Install the ROS. [Instructions for Ubuntu 14.04](http://wiki.ros.org/indigo/Installation/Ubuntu)
 2. [Setup your ROS environment](http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment)
-3. Download the Royale SDK from http://www.pmdtec.com/picoflexx/ and extract it
-4. Extract the linux 64 bit archive from the extracted SDK.
-5. Install the headers and library from the SDK using the provided [script](install_libroyale.sh)
+3. Download the royale SDK from http://www.pmdtec.com/picoflexx/ and extract it
+4. Extract the linux 64 bit archive from the extracted SDK to `<catkin_ws>/src/pico_flexx_driver/royale`.
    ```
-cd <catkin_ws>/src/pico_flexx_driver
-sudo ./install_libroyale.sh <path to extracted linux 64 bit archive>
+   cd <catkin_ws>/src/pico_flexx_driver/royale
+   tar -xf <path_to_extracted_royale_sdk>/libroyale-<version_number>-LINUX-64Bit.tar.gz
+```
+5. Install the udev rules provided by the SDK
+   ```
+cd <catkin_ws>/src/pico_flexx_driver/royale
+sudo cp libroyale-<version_number>-LINUX-64Bit/driver/udev/10-royale-ubuntu.rules /etc/udev/rules.d/
 ```
 6. Run `catkin_make`
 7. Plug in the CamBoard pico flexx device
 8. Run `roslaunch pico_flexx_driver pico_flexx_driver.launch publish_tf:=true`
 9. Start `rosrun rviz rviz`, set the `Fixed frame` to `pico_flexx_link` and add a `PointCloud2` and select `/pico_flexx/points`
+
+*Note: The pico_flexx_driver automaticaly tries to use the most recent version that is extracted in `<catkin_ws>/src/pico_flexx_driver/royale`.
+To use a newer release just extract it to that directory in addition to the previous one and recompile it with `catkin_make clean` and `catkin_make`.
+If something does not work with a newer version, just delete the extracted directory and recompile it with `catkin_make clean` and `catkin_make`.*
 
 ## Usage
 

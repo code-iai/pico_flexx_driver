@@ -392,6 +392,10 @@ private:
              << "        queue_size: " FG_CYAN << queueSize << NO_COLOR << std::endl
              << "      base_name_tf: " FG_CYAN << baseNameTF << NO_COLOR);
 
+    uint32_t major, minor, patch, build;
+    royale::getVersion(major, minor, patch, build);
+    OUT_INFO("libroyale version: " FG_CYAN << major << '.' << minor << '.' << patch << '.' << build << NO_COLOR);
+
     royale::LensParameters params;
     if(!selectCamera(sensor)
        || !setUseCase(useCase)
