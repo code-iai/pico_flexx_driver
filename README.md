@@ -32,11 +32,13 @@ Features:
 2. [Setup your ROS environment](http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment)
 3. Download the royale SDK from http://www.pmdtec.com/picoflexx/ and extract it
 4. Extract the linux 64 bit archive from the extracted SDK to `<catkin_ws>/src/pico_flexx_driver/royale`.
+
    ```
    cd <catkin_ws>/src/pico_flexx_driver/royale
    tar -xf <path_to_extracted_royale_sdk>/libroyale-<version_number>-LINUX-64Bit.tar.gz
 ```
 5. Install the udev rules provided by the SDK
+
    ```
 cd <catkin_ws>/src/pico_flexx_driver/royale
 sudo cp libroyale-<version_number>-LINUX-64Bit/driver/udev/10-royale-ubuntu.rules /etc/udev/rules.d/
