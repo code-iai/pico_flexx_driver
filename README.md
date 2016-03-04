@@ -1,8 +1,10 @@
 # PMD CamBoard pico flexx Driver
 
+![pixo_flexx_ros](https://ai.uni-bremen.de/wiki/_media/software/pico_flexx_ros.png)
+
 ## Maintainer
 
-- [Thiemo Wiedemeyer](https://ai.uni-bremen.de/team/thiemo_wiedemeyer) <<wiedemeyer@cs.uni-bremen.de>>, [Institute for Artificial Intelligence](http://ai.uni-bremen.de/), University of Bremen
+- [Thiemo Wiedemeyer](https://ai.uni-bremen.de/team/thiemo_wiedemeyer) <<wiedemeyer@cs.uni-bremen.de>>, [Institute for Artificial Intelligence](https://ai.uni-bremen.de/), University of Bremen
 
 ## Table of contents
 - [Description](#description)
@@ -11,7 +13,6 @@
 - [Usage](#usage)
 
 ## Description
-
 This package is a ROS interface to the [CamBoard pico flexx](http://www.pmdtec.com/picoflexx/) from pmd.
 
 Features:
