@@ -506,20 +506,20 @@ private:
     OUT_INFO("exposure mode: " FG_CYAN << (expMode == royale::ExposureMode::AUTOMATIC ? "automatic" : "manual") << NO_COLOR);
     OUT_INFO("exposure limits: " FG_CYAN << limits.first << " / " << limits.second << NO_COLOR);
 
+    OUT_INFO("camera info:");
     if(info.empty())
     {
-      OUT_ERROR("  no camera info available!");
-      ret = false;
+      OUT_INFO("  no camera info available!");
     }
     else
     {
-      OUT_INFO("camera info:");
       for(size_t i = 0; i < info.size(); ++i)
       {
         OUT_INFO("  " << info[i].first << ": " FG_CYAN << info[i].second << NO_COLOR);
       }
     }
 
+    OUT_INFO("use cases:");
     if(useCases.empty())
     {
       OUT_ERROR("  no use cases available!");
@@ -527,7 +527,6 @@ private:
     }
     else
     {
-      OUT_INFO("use cases:");
       for(size_t i = 0; i < useCases.size(); ++i)
       {
         OUT_INFO("  " << i << ": " FG_CYAN << useCases[i] << (useCases[i] == useCase ? FG_YELLOW " (selected)" : "") << NO_COLOR);

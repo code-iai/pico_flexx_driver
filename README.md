@@ -25,7 +25,7 @@ Features:
 ## Dependencies
 
 - ROS Indigo (or newer should also work)
-- [Royale SDK](http://www.pmdtec.com/picoflexx/) (1.6.0.60 or newer)
+- [Royale SDK](http://www.pmdtec.com/picoflexx/) (1.6.0.60, 1.7.0.66 or newer)
 
 ## Install
 
