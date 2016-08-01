@@ -1,21 +1,21 @@
 # search for royale SDK
 # find all `share` directories in `royale` directory
-execute_process(COMMAND find "${PROJECT_SOURCE_DIR}/royale/" -type d -name "share" OUTPUT_VARIABLE PATHS_STRING)
-if(PATHS_STRING)
-  string(REPLACE "\n" ";" PATHS_LIST ${PATHS_STRING})
-  # sort the list in reverse order to get the newest version first
-  list(SORT PATHS_LIST)
-  list(REVERSE PATHS_LIST)
+execute_process(COMMAND "${PROJECT_SOURCE_DIR}/cmake/findPicoFlexxSDK.py" "${PROJECT_SOURCE_DIR}/royale/" RESULT_VARIABLE ERROR_CODE OUTPUT_VARIABLE PATHS_STRING)
 
-  # store CXX flags to override the settings from royale later
-  set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
+if(ERROR_CODE EQUAL 0)
+  if(PATHS_STRING)
+    string(REPLACE "\n" ";" PATHS_LIST ${PATHS_STRING})
 
-  find_package(royale REQUIRED
-    PATHS ${PATHS_LIST}
-    NO_DEFAULT_PATH
-  )
+    # store CXX flags to override the settings from royale later
+    set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
+    find_package(royale REQUIRED
+      PATHS ${PATHS_LIST}
+      NO_DEFAULT_PATH
+    )
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
+  endif()
 endif()
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(royale

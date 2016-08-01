@@ -121,19 +121,17 @@ private:
   boost::recursive_mutex lockServer;
   dynamic_reconfigure::Server<pico_flexx_driver::pico_flexx_driverConfig> server;
   pico_flexx_driver::pico_flexx_driverConfig configMin, configMax, config;
+  int cbExposureTime;
 
   std::unique_ptr<royale::ICameraDevice> cameraDevice;
   std::unique_ptr<royale::DepthData> data;
 
   std::mutex lockStatus, lockData, lockTiming;
   std::condition_variable cvNewData;
-  bool running, newData;
+  bool running, newData, ignoreNewExposure;
   uint64_t frame, framesPerTiming, processTime, delayReceived;
   std::string baseNameTF;
   std::chrono::high_resolution_clock::time_point startTime;
-  uint32_t exposureTime;
-  float maxNoise;
-  double rangeFactor;
   std::thread threadProcess;
 
 public:
@@ -217,15 +215,20 @@ public:
 
   void onNewExposure(const uint32_t newExposureTime)
   {
-    if(exposureTime == newExposureTime)
+    if(ignoreNewExposure)
+    {
+      ignoreNewExposure = false;
+      cbExposureTime = (int)newExposureTime;
+      return;
+    }
+
+    if(config.exposure_time == (int)newExposureTime)
     {
       return;
     }
 
-    exposureTime = newExposureTime;
-    OUT_DEBUG("exposure changed: " << newExposureTime);
-
-    config.exposure_time = newExposureTime;
+    OUT_DEBUG("exposure changed: " FG_YELLOW << newExposureTime);
+    config.exposure_time = (int)newExposureTime;
     server.updateConfig(config);
   }
 
@@ -248,12 +251,18 @@ public:
       frame = 0;
       delayReceived = 0;
       lockTiming.unlock();
+      ignoreNewExposure = config.exposure_mode == 0; // ignore if manual mode
 
       if(cameraDevice->startCapture() != royale::CameraStatus::SUCCESS)
       {
         OUT_ERROR("could not start capture!");
         running = false;
         ros::shutdown();
+      }
+
+      if(config.exposure_mode == 0 && cbExposureTime != config.exposure_time)
+      {
+        setExposure((uint32_t)config.exposure_time);
       }
     }
     else if(!clientsConnected && cameraDevice->isCapturing())
@@ -279,7 +288,7 @@ public:
     if(level & 0x01)
     {
       OUT_INFO("reconfigured use case: " << FG_CYAN << cameraDevice->getUseCases()[config.use_case] << NO_COLOR);
-      if(!setUseCase(config.use_case))
+      if(!setUseCase((size_t)config.use_case))
       {
         config.use_case = this->config.use_case;
         return;
@@ -289,8 +298,9 @@ public:
 
     if(level & 0x02)
     {
-      OUT_INFO("reconfigured exposure_mode: " << FG_CYAN << (config.exposure_mode == 0 ? "automatic" : "manual") << NO_COLOR);
-      if(!setExposureMode(config.exposure_mode == 0))
+      OUT_INFO("reconfigured exposure_mode: " << FG_CYAN << (config.exposure_mode == 1 ? "automatic" : "manual") << NO_COLOR);
+
+      if(!setExposureMode(config.exposure_mode == 1))
       {
         config.exposure_mode = this->config.exposure_mode;
         return;
@@ -301,7 +311,7 @@ public:
     if(level & 0x04)
     {
       OUT_INFO("reconfigured exposure_time: " << FG_CYAN << config.exposure_time << NO_COLOR);
-      if(cameraDevice->getExposureMode() == royale::ExposureMode::AUTOMATIC || !setExposure(config.exposure_time))
+      if(cameraDevice->getExposureMode() == royale::ExposureMode::AUTOMATIC || (cameraDevice->isCapturing() && !setExposure((uint32_t)config.exposure_time)))
       {
         config.exposure_time = this->config.exposure_time;
         return;
@@ -313,7 +323,6 @@ public:
     {
       OUT_INFO("reconfigured max_noise: " << FG_CYAN << config.max_noise << " meters" << NO_COLOR);
       lockStatus.lock();
-      maxNoise = (float)config.max_noise;
       this->config.max_noise = config.max_noise;
       lockStatus.unlock();
     }
@@ -322,7 +331,6 @@ public:
     {
       OUT_INFO("reconfigured range_factor: " << FG_CYAN << config.range_factor << " meters" << NO_COLOR);
       lockStatus.lock();
-      rangeFactor = (float)config.range_factor;
       this->config.range_factor = config.range_factor;
       lockStatus.unlock();
     }
@@ -350,19 +358,17 @@ private:
     bool automaticExposure;
     int32_t useCase, exposureTime, queueSize;
     std::string sensor, baseName;
-    double max_noise, range_factor;
+    double maxNoise, rangeFactor;
 
     priv_nh.param("base_name", baseName, std::string(PF_DEFAULT_NS));
     priv_nh.param("sensor", sensor, std::string(""));
     priv_nh.param("use_case", useCase, 0);
     priv_nh.param("automatic_exposure", automaticExposure, true);
     priv_nh.param("exposure_time", exposureTime, 1000);
-    priv_nh.param("max_noise", max_noise, 0.7);
-    priv_nh.param("range_factor", range_factor, 2.0);
+    priv_nh.param("max_noise", maxNoise, 0.7);
+    priv_nh.param("range_factor", rangeFactor, 2.0);
     priv_nh.param("queue_size", queueSize, 2);
     priv_nh.param("base_name_tf", baseNameTF, baseName);
-    maxNoise = (float)max_noise;
-    rangeFactor = (float)range_factor;
 
     OUT_INFO("parameter:" << std::endl
              << "         base_name: " FG_CYAN << baseName << NO_COLOR << std::endl
@@ -381,9 +387,8 @@ private:
 
     royale::LensParameters params;
     if(!selectCamera(sensor)
-       || !setUseCase(useCase)
+       || !setUseCase((size_t)useCase)
        || !setExposureMode(automaticExposure)
-       || (!automaticExposure && !setExposure(exposureTime))
        || !getCameraSettings(params)
        || !createCameraInfo(params))
     {
@@ -396,6 +401,7 @@ private:
       return false;
     }
 
+
     if(cameraDevice->registerDataListener(this) != royale::CameraStatus::SUCCESS)
     {
       OUT_ERROR("could not register data listener!");
@@ -404,17 +410,19 @@ private:
 
     setTopics(baseName, queueSize);
 
-    config.use_case = useCase;
-    config.exposure_mode = automaticExposure ? 0 : 1;
-    config.exposure_time = exposureTime;
-    config.max_noise = (float)maxNoise;
-    config.range_factor = (float)rangeFactor;
-
     const royale::Pair<uint32_t, uint32_t> limits = cameraDevice->getExposureLimits();
     configMin.exposure_time = limits.first;
     configMax.exposure_time = limits.second;
     server.setConfigMin(configMin);
     server.setConfigMax(configMax);
+
+    const royale::Vector<royale::String> &useCases = cameraDevice->getUseCases();
+
+    config.use_case = std::max(std::min(useCase, (int)useCases.size() - 1), 0);
+    config.exposure_mode = automaticExposure ? 1 : 0;
+    config.exposure_time = std::max(std::min(exposureTime, configMax.exposure_time), configMin.exposure_time);
+    config.max_noise = std::max(std::min(maxNoise, configMax.max_noise), configMin.max_noise);
+    config.range_factor = std::max(std::min(rangeFactor, configMax.range_factor), configMin.range_factor);
 
     server.setConfigDefault(config);
 
@@ -564,7 +572,7 @@ private:
     return ret;
   }
 
-  bool setUseCase(const int idx)
+  bool setUseCase(const size_t idx)
   {
     const royale::Vector<royale::String> &useCases = cameraDevice->getUseCases();
     const royale::String &useCase = cameraDevice->getCurrentUseCase();
@@ -822,28 +830,29 @@ private:
     msgCloud->fields[0].datatype = sensor_msgs::PointField::FLOAT32;
     msgCloud->fields[0].count = 1;
     msgCloud->fields[1].name = "y";
-    msgCloud->fields[1].offset = msgCloud->fields[0].offset + sizeof(float);
+    msgCloud->fields[1].offset = msgCloud->fields[0].offset + (uint32_t)sizeof(float);
     msgCloud->fields[1].datatype = sensor_msgs::PointField::FLOAT32;
     msgCloud->fields[1].count = 1;
     msgCloud->fields[2].name = "z";
-    msgCloud->fields[2].offset = msgCloud->fields[1].offset + sizeof(float);
+    msgCloud->fields[2].offset = msgCloud->fields[1].offset + (uint32_t)sizeof(float);
     msgCloud->fields[2].datatype = sensor_msgs::PointField::FLOAT32;
     msgCloud->fields[2].count = 1;
     msgCloud->fields[3].name = "noise";
-    msgCloud->fields[3].offset = msgCloud->fields[2].offset + sizeof(float);
+    msgCloud->fields[3].offset = msgCloud->fields[2].offset + (uint32_t)sizeof(float);
     msgCloud->fields[3].datatype = sensor_msgs::PointField::FLOAT32;
     msgCloud->fields[3].count = 1;
     msgCloud->fields[4].name = "intensity";
-    msgCloud->fields[4].offset = msgCloud->fields[3].offset + sizeof(float);
+    msgCloud->fields[4].offset = msgCloud->fields[3].offset + (uint32_t)sizeof(float);
     msgCloud->fields[4].datatype = sensor_msgs::PointField::UINT16;
     msgCloud->fields[4].count = 1;
     msgCloud->fields[5].name = "gray";
-    msgCloud->fields[5].offset = msgCloud->fields[4].offset + sizeof(uint16_t);
+    msgCloud->fields[5].offset = msgCloud->fields[4].offset + (uint32_t)sizeof(uint16_t);
     msgCloud->fields[5].datatype = sensor_msgs::PointField::UINT8;
     msgCloud->fields[5].count = 1;
     msgCloud->data.resize(5 * sizeof(float) * data.points.size());
 
     const float invalid = std::numeric_limits<float>::quiet_NaN();
+    const float maxNoise = (float)config.max_noise;
     const royale::DepthPoint *itI = &data.points[0];
     float *itCX = (float *)&msgCloud->data[0];
     float *itCY = itCX + 1;
@@ -920,8 +929,8 @@ private:
     }
     deviation = sqrt(deviation / ((double)count - 1.0));
 
-    const uint16_t minV = (uint16_t)std::max(average - rangeFactor * deviation, 0.0);
-    const uint16_t maxV = (uint16_t)std::min(average + rangeFactor * deviation, 65535.0) - minV;
+    const uint16_t minV = (uint16_t)std::max(average - config.range_factor * deviation, 0.0);
+    const uint16_t maxV = (uint16_t)(std::min(average + config.range_factor * deviation, 65535.0) - minV);
     const double maxVF = 255.0 / (double)maxV;
     uint8_t *itO = pMono8;
     uint8_t *itP = ((uint8_t *)&msgCloud->data[0]) + 18;
@@ -935,7 +944,7 @@ private:
       }
       else
       {
-        v -= minV;
+        v = (uint16_t)(v - minV);
       }
       if(v > maxV)
       {

@@ -25,7 +25,7 @@ Features:
 ## Dependencies
 
 - ROS Indigo (or newer should also work)
-- [Royale SDK](http://www.pmdtec.com/picoflexx/) (1.6.0.60, 1.7.0.66 or newer)
+- [Royale SDK](http://www.pmdtec.com/picoflexx/) (1.10.0.78 or newer)
 
 ## Install
 
@@ -152,7 +152,7 @@ This topic publishes the camera intrinsic parameters.
 ##### `/pico_flexx/image_depth`
 Bandwidth: 153.28 KB per message (@5 Hz: ~766 KB/s, @45 Hz: ~ 6897 KB/s)
 
-This is the distorted depth image. It is a 32-Bit float image where each pixel is a distance measured in meters.
+This is the distorted depth image. It is a 32-Bit float image where each pixel is a distance measured in meters along the optical axis.
 
 ##### `/pico_flexx/image_mono16`
 Bandwidth: 76.67 KB per message (@5 Hz: ~383 KB/s, @45 Hz: ~ 3450 KB/s)
