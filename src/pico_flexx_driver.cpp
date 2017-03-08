@@ -242,7 +242,9 @@ public:
       clientsConnected = clientsConnected || status[i];
     }
 
-    if(clientsConnected && !cameraDevice->isCapturing())
+    bool isCapturing(false);
+    cameraDevice->isCapturing(isCapturing);
+    if(clientsConnected && !isCapturing)
     {
       OUT_INFO("client connected. starting device...");
 
@@ -265,7 +267,7 @@ public:
         setExposure((uint32_t)config.exposure_time);
       }
     }
-    else if(!clientsConnected && cameraDevice->isCapturing())
+    else if(!clientsConnected && isCapturing)
     {
       OUT_INFO("no clients connected. stopping device...");
       if(cameraDevice->stopCapture() != royale::CameraStatus::SUCCESS)
@@ -287,7 +289,9 @@ public:
 
     if(level & 0x01)
     {
-      OUT_INFO("reconfigured use case: " << FG_CYAN << cameraDevice->getUseCases()[config.use_case] << NO_COLOR);
+      royale::Vector<royale::String> useCases;
+      cameraDevice->getUseCases(useCases);
+      OUT_INFO("reconfigured use case: " << FG_CYAN << useCases.at(config.use_case) << NO_COLOR);
       if(!setUseCase((size_t)config.use_case))
       {
         config.use_case = this->config.use_case;
@@ -311,7 +315,11 @@ public:
     if(level & 0x04)
     {
       OUT_INFO("reconfigured exposure_time: " << FG_CYAN << config.exposure_time << NO_COLOR);
-      if(cameraDevice->getExposureMode() == royale::ExposureMode::AUTOMATIC || (cameraDevice->isCapturing() && !setExposure((uint32_t)config.exposure_time)))
+      royale::ExposureMode exposureMode;
+      cameraDevice->getExposureMode(exposureMode);
+      bool isCapturing(false);
+      cameraDevice->isCapturing(isCapturing);
+      if(exposureMode == royale::ExposureMode::AUTOMATIC || (isCapturing && !setExposure((uint32_t)config.exposure_time)))
       {
         config.exposure_time = this->config.exposure_time;
         return;
@@ -337,7 +345,8 @@ public:
 
     if(level & 0x01 || level & 0x02)
     {
-      const royale::Pair<uint32_t, uint32_t> limits = cameraDevice->getExposureLimits();
+      royale::Pair<uint32_t, uint32_t> limits;
+      cameraDevice->getExposureLimits(limits);
       configMin.exposure_time = limits.first;
       configMax.exposure_time = limits.second;
       server.setConfigMin(configMin);
@@ -410,13 +419,15 @@ private:
 
     setTopics(baseName, queueSize);
 
-    const royale::Pair<uint32_t, uint32_t> limits = cameraDevice->getExposureLimits();
+    royale::Pair<uint32_t, uint32_t> limits;
+    cameraDevice->getExposureLimits(limits);
     configMin.exposure_time = limits.first;
     configMax.exposure_time = limits.second;
     server.setConfigMin(configMin);
     server.setConfigMax(configMax);
 
-    const royale::Vector<royale::String> &useCases = cameraDevice->getUseCases();
+    royale::Vector<royale::String> useCases;
+    cameraDevice->getUseCases(useCases);
 
     config.use_case = std::max(std::min(useCase, (int)useCases.size() - 1), 0);
     config.exposure_mode = automaticExposure ? 1 : 0;
@@ -502,15 +513,25 @@ private:
   bool getCameraSettings(royale::LensParameters &params)
   {
     bool ret = true;
-    const royale::Vector<royale::String> &useCases = cameraDevice->getUseCases();
-    const royale::String &useCase = cameraDevice->getCurrentUseCase();
-    const royale::ExposureMode &expMode = cameraDevice->getExposureMode();
-    const royale::Pair<uint32_t, uint32_t> &limits = cameraDevice->getExposureLimits();
-    const royale::Vector<royale::Pair<royale::String,royale::String>> &info = cameraDevice->getCameraInfo();
+    royale::Vector<royale::String> useCases;
+    cameraDevice->getUseCases(useCases);
+    royale::String useCase;
+    cameraDevice->getCurrentUseCase(useCase);
+    royale::ExposureMode expMode;
+    cameraDevice->getExposureMode(expMode);
+    royale::Pair<uint32_t, uint32_t> limits;
+    cameraDevice->getExposureLimits(limits);
+    royale::Vector<royale::Pair<royale::String,royale::String>> info;
+    cameraDevice->getCameraInfo(info);
 
-    OUT_INFO("camera name: " FG_CYAN << cameraDevice->getCameraName() << NO_COLOR);
-    OUT_INFO("camera id: " FG_CYAN << cameraDevice->getId() << NO_COLOR);
-    OUT_INFO("access level: " FG_CYAN "L" << (int)cameraDevice->getAccessLevel() + 1 << NO_COLOR);
+    royale::String cameraProperty;
+    cameraDevice->getCameraName(cameraProperty);
+    OUT_INFO("camera name: " FG_CYAN << cameraProperty << NO_COLOR);
+    cameraDevice->getId(cameraProperty);
+    OUT_INFO("camera id: " FG_CYAN << cameraProperty << NO_COLOR);
+    royale::CameraAccessLevel accessLevel;
+    cameraDevice->getAccessLevel(accessLevel);
+    OUT_INFO("access level: " FG_CYAN "L" << (int)accessLevel+ 1 << NO_COLOR);
     OUT_INFO("exposure mode: " FG_CYAN << (expMode == royale::ExposureMode::AUTOMATIC ? "automatic" : "manual") << NO_COLOR);
     OUT_INFO("exposure limits: " FG_CYAN << limits.first << " / " << limits.second << NO_COLOR);
 
@@ -544,8 +565,13 @@ private:
     if(cameraDevice->getLensParameters(params) == royale::CameraStatus::SUCCESS)
     {
       OUT_INFO("camera intrinsics:");
-      OUT_INFO("width: " FG_CYAN << cameraDevice->getMaxSensorWidth() << NO_COLOR);
-      OUT_INFO("height: " FG_CYAN << cameraDevice->getMaxSensorHeight() << NO_COLOR);
+      uint16_t maxSensorWidth;
+      cameraDevice->getMaxSensorWidth(maxSensorWidth);
+      OUT_INFO("width: " FG_CYAN << maxSensorWidth << NO_COLOR);
+
+      uint16_t maxSensorHeight;
+      cameraDevice->getMaxSensorHeight(maxSensorHeight);
+      OUT_INFO("height: " FG_CYAN << maxSensorHeight << NO_COLOR);
       OUT_INFO("fx: " FG_CYAN << params.principalPoint.first
                << NO_COLOR ", fy: " FG_CYAN << params.principalPoint.second
                << NO_COLOR ", cx: " FG_CYAN << params.focalLength.first
@@ -574,8 +600,10 @@ private:
 
   bool setUseCase(const size_t idx)
   {
-    const royale::Vector<royale::String> &useCases = cameraDevice->getUseCases();
-    const royale::String &useCase = cameraDevice->getCurrentUseCase();
+    royale::Vector<royale::String> useCases;
+    cameraDevice->getUseCases(useCases);
+    royale::String useCase;
+    cameraDevice->getCurrentUseCase(useCase);
 
     if(useCases.empty())
     {
@@ -637,7 +665,9 @@ private:
   {
     royale::ExposureMode newMode = automatic ? royale::ExposureMode::AUTOMATIC : royale::ExposureMode::MANUAL;
 
-    if(newMode == cameraDevice->getExposureMode())
+    royale::ExposureMode exposureMode;
+    cameraDevice->getExposureMode(exposureMode);
+    if(newMode == exposureMode)
     {
       OUT_INFO("exposure mode not changed!");
       return true;
@@ -655,7 +685,8 @@ private:
 
   bool setExposure(const uint32_t exposure)
   {
-    const royale::Pair<uint32_t, uint32_t> limits = cameraDevice->getExposureLimits();
+    royale::Pair<uint32_t, uint32_t> limits;
+    cameraDevice->getExposureLimits(limits);
 
     if(exposure < limits.first || exposure > limits.second)
     {
@@ -681,8 +712,13 @@ private:
       return false;
     }
 
-    cameraInfo.height = cameraDevice->getMaxSensorHeight();
-    cameraInfo.width = cameraDevice->getMaxSensorWidth();
+    uint16_t maxSensorHeight;
+    cameraDevice->getMaxSensorHeight(maxSensorHeight);
+    cameraInfo.height = maxSensorHeight;
+
+    uint16_t maxSensorWidth;
+    cameraDevice->getMaxSensorWidth(maxSensorWidth);
+    cameraInfo.width = maxSensorWidth;
 
     cameraInfo.K[0] = params.focalLength.first;
     cameraInfo.K[1] = 0;
