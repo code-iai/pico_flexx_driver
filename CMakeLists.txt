@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(pico_flexx_driver)
 
+# Fix for 'pico_nodelet not found' error in Ubuntu 16.04 and ROS kinetic [03.06.2017]
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -DBT_USE_DOUBLE_PRECISION")
 # Unused warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wuninitialized -Winit-self -Wunused-function -Wunused-label -Wunused-variable -Wunused-but-set-variable -Wunused-but-set-parameter")
