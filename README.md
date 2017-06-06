@@ -37,13 +37,15 @@ Features:
    ```
    cd <catkin_ws>/src/pico_flexx_driver/royale
    tar -xf <path_to_extracted_royale_sdk>/libroyale-<version_number>-LINUX-64Bit.tar.gz
-```
+   ```
+
 5. Install the udev rules provided by the SDK
 
    ```
-cd <catkin_ws>/src/pico_flexx_driver/royale
-sudo cp libroyale-<version_number>-LINUX-64Bit/driver/udev/10-royale-ubuntu.rules /etc/udev/rules.d/
-```
+   cd <catkin_ws>/src/pico_flexx_driver/royale
+   sudo cp libroyale-<version_number>-LINUX-64Bit/driver/udev/10-royale-ubuntu.rules /etc/udev/rules.d/
+   ```
+
 6. Run `catkin_make`
 7. Plug in the CamBoard pico flexx device
 8. Run `roslaunch pico_flexx_driver pico_flexx_driver.launch publish_tf:=true`
