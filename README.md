@@ -146,6 +146,14 @@ Some parameters can be reconfigured during runtime, for example with `rosrun rqt
 
 #### Topics
 
+When a mixed mode use case is selected, the second stream for all topics below
+is published under the `stream2` namespace (e.g.,
+`/pico_flexx/stream2/points`). In mixed mode, both a low-range, high-noise,
+high-frequency point cloud and a high-range, low-noise, low-frequency (5 Hz)
+point cloud are published. The 5 Hz point cloud in mixed mode only allows a
+maximum exposure time of 1300 microseconds, so it has slightly higher noise
+than the 5 Hz point cloud in single mode at 2000 microseconds.
+
 ##### `/pico_flexx/camera_info`
 Bandwidth: 0.37 KB per message (@5 Hz: ~2 KB/s, @45 Hz: ~ 17 KB/s)
 
