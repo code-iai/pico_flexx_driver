@@ -19,7 +19,7 @@ ELSE()
   MESSAGE(ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 ENDIF()
 
-set(CMAKE_MODULE_PATH   ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH   ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -52,6 +52,7 @@ generate_dynamic_reconfigure_options(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
+  CATKIN_DEPENDS nodelet roscpp rostime sensor_msgs std_msgs dynamic_reconfigure
 )
 
 ###########
