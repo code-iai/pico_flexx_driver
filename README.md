@@ -128,11 +128,11 @@ Some parameters can be reconfigured during runtime, for example with `rosrun rqt
 
   Choose from a list of use cases.
 
-- `exposure_mode`:
+- `exposure_mode`, `exposure_mode_stream2`:
 
   `AUTOMATIC` or `MANUAL`.
 
-- `exposure_time`:
+- `exposure_time`, `exposure_time_stream2`:
 
   Exposure time. Only for manual exposure.
 
