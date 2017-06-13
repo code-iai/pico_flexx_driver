@@ -100,7 +100,7 @@
 
 #endif
 
-class PicoFlexx : public royale::IDepthDataListener, public royale::IExposureListener
+class PicoFlexx : public royale::IDepthDataListener, public royale::IExposureListener2
 {
 private:
   enum Topics
@@ -121,14 +121,15 @@ private:
   boost::recursive_mutex lockServer;
   dynamic_reconfigure::Server<pico_flexx_driver::pico_flexx_driverConfig> server;
   pico_flexx_driver::pico_flexx_driverConfig configMin, configMax, config;
-  int cbExposureTime;
+  std::vector<int> cbExposureTime;
 
   std::unique_ptr<royale::ICameraDevice> cameraDevice;
   std::unique_ptr<royale::DepthData> data;
 
   std::mutex lockStatus, lockData, lockTiming;
   std::condition_variable cvNewData;
-  bool running, newData, ignoreNewExposure;
+  bool running, newData;
+  std::vector<bool> ignoreNewExposure;
   uint64_t frame, framesPerTiming, processTime, delayReceived;
   std::string baseNameTF;
   std::chrono::high_resolution_clock::time_point startTime;
@@ -136,10 +137,12 @@ private:
 
 public:
   PicoFlexx(const ros::NodeHandle &nh = ros::NodeHandle(), const ros::NodeHandle &priv_nh = ros::NodeHandle("~"))
-    : royale::IDepthDataListener(), royale::IExposureListener(), nh(nh), priv_nh(priv_nh), server(lockServer)
+    : royale::IDepthDataListener(), royale::IExposureListener2(), nh(nh), priv_nh(priv_nh), server(lockServer)
   {
+    cbExposureTime.resize(2);
     running = false;
     newData = false;
+    ignoreNewExposure.resize(2);
     frame = 0;
     framesPerTiming = 25;
     processTime = 0;
@@ -154,18 +157,24 @@ public:
     config.use_case = 0;
     config.exposure_mode = 0;
     config.exposure_time = 1000;
+    config.exposure_mode_stream2 = 0;
+    config.exposure_time_stream2 = 1000;
     config.max_noise = 0.07;
     config.range_factor = 2.0;
 
     configMin.use_case = 0;
     configMin.exposure_mode = 0;
     configMin.exposure_time = 50;
+    configMin.exposure_mode_stream2 = 0;
+    configMin.exposure_time_stream2 = 50;
     configMin.max_noise = 0.0;
     configMin.range_factor = 0.0;
 
     configMax.use_case = 5;
     configMax.exposure_mode = 1;
     configMax.exposure_time = 2000;
+    configMax.exposure_mode_stream2 = 1;
+    configMax.exposure_time_stream2 = 2000;
     configMax.max_noise = 0.10;
     configMax.range_factor = 7.0;
   }
@@ -218,22 +227,41 @@ public:
     cvNewData.notify_one();
   }
 
-  void onNewExposure(const uint32_t newExposureTime)
+  void onNewExposure(const uint32_t newExposureTime, const royale::StreamId streamId)
   {
-    if(ignoreNewExposure)
-    {
-      ignoreNewExposure = false;
-      cbExposureTime = (int)newExposureTime;
-      return;
-    }
-
-    if(config.exposure_time == (int)newExposureTime)
+    size_t streamIndex;
+    if (!findStreamIndex(streamId, streamIndex))
     {
       return;
     }
 
-    OUT_DEBUG("exposure changed: " FG_YELLOW << newExposureTime);
-    config.exposure_time = (int)newExposureTime;
+    if(ignoreNewExposure[streamIndex])
+    {
+      ignoreNewExposure[streamIndex] = false;
+      cbExposureTime[streamIndex] = (int)newExposureTime;
+      return;
+    }
+
+    if (streamIndex == 0)
+    {
+      if(config.exposure_time == (int)newExposureTime)
+      {
+        return;
+      }
+
+      OUT_DEBUG("exposure changed: " FG_YELLOW << newExposureTime);
+      config.exposure_time = (int)newExposureTime;
+    }
+    else if (streamIndex == 1)
+    {
+      if(config.exposure_time_stream2 == (int)newExposureTime)
+      {
+        return;
+      }
+
+      OUT_DEBUG("exposure changed (stream2): " FG_YELLOW << newExposureTime);
+      config.exposure_time_stream2 = (int)newExposureTime;
+    }
     server.updateConfig(config);
   }
 
@@ -261,7 +289,8 @@ public:
       frame = 0;
       delayReceived = 0;
       lockTiming.unlock();
-      ignoreNewExposure = config.exposure_mode == 0; // ignore if manual mode
+      ignoreNewExposure[0] = config.exposure_mode == 0; // ignore if manual mode
+      ignoreNewExposure[1] = config.exposure_mode_stream2 == 0;
 
       if(cameraDevice->startCapture() != royale::CameraStatus::SUCCESS)
       {
@@ -270,9 +299,21 @@ public:
         ros::shutdown();
       }
 
-      if(config.exposure_mode == 0 && cbExposureTime != config.exposure_time)
+      royale::Vector<royale::StreamId> streams;
+      cameraDevice->getStreams(streams);
+
+      if(config.exposure_mode == 0
+         && streams.size() >= 1
+         && cbExposureTime[0] != config.exposure_time)
       {
-        setExposure((uint32_t)config.exposure_time);
+        setExposure((uint32_t)config.exposure_time, streams[0]);
+      }
+
+      if(config.exposure_mode_stream2 == 0
+         && streams.size() >= 2
+         && cbExposureTime[1] != config.exposure_time_stream2)
+      {
+        setExposure((uint32_t)config.exposure_time_stream2, streams[1]);
       }
     }
     else if(!clientsConnected && isCapturing)
@@ -312,7 +353,10 @@ public:
     {
       OUT_INFO("reconfigured exposure_mode: " << FG_CYAN << (config.exposure_mode == 1 ? "automatic" : "manual") << NO_COLOR);
 
-      if(!setExposureMode(config.exposure_mode == 1))
+      royale::Vector<royale::StreamId> streams;
+      cameraDevice->getStreams(streams);
+
+      if(streams.size() < 1 || !setExposureMode(config.exposure_mode == 1, streams[0]))
       {
         config.exposure_mode = this->config.exposure_mode;
         return;
@@ -322,12 +366,30 @@ public:
 
     if(level & 0x04)
     {
+      OUT_INFO("reconfigured exposure_mode_stream2: " << FG_CYAN << (config.exposure_mode_stream2 == 1 ? "automatic" : "manual") << NO_COLOR);
+
+      royale::Vector<royale::StreamId> streams;
+      cameraDevice->getStreams(streams);
+
+      if(streams.size() < 2 || !setExposureMode(config.exposure_mode_stream2 == 1, streams[1]))
+      {
+        config.exposure_mode_stream2 = this->config.exposure_mode_stream2;
+        return;
+      }
+      this->config.exposure_mode_stream2 = config.exposure_mode_stream2;
+    }
+
+    if(level & 0x08)
+    {
       OUT_INFO("reconfigured exposure_time: " << FG_CYAN << config.exposure_time << NO_COLOR);
+      royale::Vector<royale::StreamId> streams;
+      cameraDevice->getStreams(streams);
       royale::ExposureMode exposureMode;
       cameraDevice->getExposureMode(exposureMode);
       bool isCapturing(false);
       cameraDevice->isCapturing(isCapturing);
-      if(exposureMode == royale::ExposureMode::AUTOMATIC || (isCapturing && !setExposure((uint32_t)config.exposure_time)))
+      if(exposureMode == royale::ExposureMode::AUTOMATIC
+         || (isCapturing && (streams.size() < 1 || !setExposure((uint32_t)config.exposure_time, streams[0]))))
       {
         config.exposure_time = this->config.exposure_time;
         return;
@@ -335,7 +397,25 @@ public:
       this->config.exposure_time = config.exposure_time;
     }
 
-    if(level & 0x08)
+    if(level & 0x10)
+    {
+      OUT_INFO("reconfigured exposure_time_stream2: " << FG_CYAN << config.exposure_time_stream2 << NO_COLOR);
+      royale::Vector<royale::StreamId> streams;
+      cameraDevice->getStreams(streams);
+      royale::ExposureMode exposureMode;
+      cameraDevice->getExposureMode(exposureMode);
+      bool isCapturing(false);
+      cameraDevice->isCapturing(isCapturing);
+      if(exposureMode == royale::ExposureMode::AUTOMATIC
+         || (isCapturing && (streams.size() < 2 || !setExposure((uint32_t)config.exposure_time_stream2, streams[1]))))
+      {
+        config.exposure_time_stream2 = this->config.exposure_time_stream2;
+        return;
+      }
+      this->config.exposure_time_stream2 = config.exposure_time_stream2;
+    }
+
+    if(level & 0x20)
     {
       OUT_INFO("reconfigured max_noise: " << FG_CYAN << config.max_noise << " meters" << NO_COLOR);
       lockStatus.lock();
@@ -343,7 +423,7 @@ public:
       lockStatus.unlock();
     }
 
-    if(level & 0x10)
+    if(level & 0x40)
     {
       OUT_INFO("reconfigured range_factor: " << FG_CYAN << config.range_factor << " meters" << NO_COLOR);
       lockStatus.lock();
@@ -351,12 +431,25 @@ public:
       lockStatus.unlock();
     }
 
-    if(level & 0x01 || level & 0x02)
+    if(level & (0x01 | 0x02 | 0x04))
     {
       royale::Pair<uint32_t, uint32_t> limits;
-      cameraDevice->getExposureLimits(limits);
-      configMin.exposure_time = limits.first;
-      configMax.exposure_time = limits.second;
+      royale::Vector<royale::StreamId> streams;
+      cameraDevice->getStreams(streams);
+
+      if (streams.size() >= 1)
+      {
+        cameraDevice->getExposureLimits(limits, streams[0]);
+        configMin.exposure_time = limits.first;
+        configMax.exposure_time = limits.second;
+      }
+      if (streams.size() >= 2)
+      {
+        cameraDevice->getExposureLimits(limits, streams[1]);
+        configMin.exposure_time_stream2 = limits.first;
+        configMax.exposure_time_stream2 = limits.second;
+      }
+
       server.setConfigMin(configMin);
       server.setConfigMax(configMax);
     }
@@ -372,8 +465,8 @@ private:
       return false;
     }
 
-    bool automaticExposure;
-    int32_t useCase, exposureTime, queueSize;
+    bool automaticExposure, automaticExposureStream2;
+    int32_t useCase, exposureTime, exposureTimeStream2, queueSize;
     std::string sensor, baseName;
     double maxNoise, rangeFactor;
 
@@ -381,22 +474,26 @@ private:
     priv_nh.param("sensor", sensor, std::string(""));
     priv_nh.param("use_case", useCase, 0);
     priv_nh.param("automatic_exposure", automaticExposure, true);
+    priv_nh.param("automatic_exposure", automaticExposureStream2, true);
     priv_nh.param("exposure_time", exposureTime, 1000);
+    priv_nh.param("exposure_time_stream2", exposureTimeStream2, 1000);
     priv_nh.param("max_noise", maxNoise, 0.7);
     priv_nh.param("range_factor", rangeFactor, 2.0);
     priv_nh.param("queue_size", queueSize, 2);
     priv_nh.param("base_name_tf", baseNameTF, baseName);
 
     OUT_INFO("parameter:" << std::endl
-             << "         base_name: " FG_CYAN << baseName << NO_COLOR << std::endl
-             << "            sensor: " FG_CYAN << (sensor.empty() ? "default" : sensor) << NO_COLOR << std::endl
-             << "          use_case: " FG_CYAN << useCase << NO_COLOR << std::endl
-             << "automatic_exposure: " FG_CYAN << (automaticExposure ? "true" : "false") << NO_COLOR << std::endl
-             << "     exposure_time: " FG_CYAN << exposureTime << NO_COLOR << std::endl
-             << "         max_noise: " FG_CYAN << maxNoise << " meters" NO_COLOR << std::endl
-             << "      range_factor: " FG_CYAN << rangeFactor << NO_COLOR << std::endl
-             << "        queue_size: " FG_CYAN << queueSize << NO_COLOR << std::endl
-             << "      base_name_tf: " FG_CYAN << baseNameTF << NO_COLOR);
+             << "                 base_name: " FG_CYAN << baseName << NO_COLOR << std::endl
+             << "                    sensor: " FG_CYAN << (sensor.empty() ? "default" : sensor) << NO_COLOR << std::endl
+             << "                  use_case: " FG_CYAN << useCase << NO_COLOR << std::endl
+             << "        automatic_exposure: " FG_CYAN << (automaticExposure ? "true" : "false") << NO_COLOR << std::endl
+             << "automatic_exposure_stream2: " FG_CYAN << (automaticExposureStream2 ? "true" : "false") << NO_COLOR << std::endl
+             << "             exposure_time: " FG_CYAN << exposureTime << NO_COLOR << std::endl
+             << "     exposure_time_stream2: " FG_CYAN << exposureTimeStream2 << NO_COLOR << std::endl
+             << "                 max_noise: " FG_CYAN << maxNoise << " meters" NO_COLOR << std::endl
+             << "              range_factor: " FG_CYAN << rangeFactor << NO_COLOR << std::endl
+             << "                queue_size: " FG_CYAN << queueSize << NO_COLOR << std::endl
+             << "              base_name_tf: " FG_CYAN << baseNameTF << NO_COLOR);
 
     uint32_t major, minor, patch, build;
     royale::getVersion(major, minor, patch, build);
@@ -405,7 +502,7 @@ private:
     royale::LensParameters params;
     if(!selectCamera(sensor)
        || !setUseCase((size_t)useCase)
-       || !setExposureMode(automaticExposure)
+       || !setExposureModeAllStreams(automaticExposure, automaticExposureStream2)
        || !getCameraSettings(params)
        || !createCameraInfo(params))
     {
@@ -439,7 +536,9 @@ private:
 
     config.use_case = std::max(std::min(useCase, (int)useCases.size() - 1), 0);
     config.exposure_mode = automaticExposure ? 1 : 0;
+    config.exposure_mode_stream2 = automaticExposureStream2 ? 1 : 0;
     config.exposure_time = std::max(std::min(exposureTime, configMax.exposure_time), configMin.exposure_time);
+    config.exposure_time_stream2 = std::max(std::min(exposureTimeStream2, configMax.exposure_time_stream2), configMin.exposure_time_stream2);
     config.max_noise = std::max(std::min(maxNoise, configMax.max_noise), configMin.max_noise);
     config.range_factor = std::max(std::min(rangeFactor, configMax.range_factor), configMin.range_factor);
 
@@ -679,19 +778,31 @@ private:
     return true;
   }
 
-  bool setExposureMode(const bool automatic)
+  bool setExposureModeAllStreams(const bool automatic, const bool automaticStream2)
+  {
+    bool success = true;
+    royale::Vector<royale::StreamId> streams;
+    cameraDevice->getStreams(streams);
+    if (streams.size() >= 1)
+      success &= setExposureMode(automatic, streams[0]);
+    if (streams.size() >= 2)
+      success &= setExposureMode(automaticStream2, streams[1]);
+    return success;
+  }
+
+  bool setExposureMode(const bool automatic, const royale::StreamId streamId = 0)
   {
     royale::ExposureMode newMode = automatic ? royale::ExposureMode::AUTOMATIC : royale::ExposureMode::MANUAL;
 
     royale::ExposureMode exposureMode;
-    cameraDevice->getExposureMode(exposureMode);
+    cameraDevice->getExposureMode(exposureMode, streamId);
     if(newMode == exposureMode)
     {
       OUT_INFO("exposure mode not changed!");
       return true;
     }
 
-    if(cameraDevice->setExposureMode(newMode) != royale::CameraStatus::SUCCESS)
+    if(cameraDevice->setExposureMode(newMode, streamId) != royale::CameraStatus::SUCCESS)
     {
       OUT_ERROR("could not set operation mode!");
       return false;
@@ -701,10 +812,10 @@ private:
     return true;
   }
 
-  bool setExposure(const uint32_t exposure)
+  bool setExposure(const uint32_t exposure, const royale::StreamId streamId = 0)
   {
     royale::Pair<uint32_t, uint32_t> limits;
-    cameraDevice->getExposureLimits(limits);
+    cameraDevice->getExposureLimits(limits, streamId);
 
     if(exposure < limits.first || exposure > limits.second)
     {
@@ -712,7 +823,7 @@ private:
       return false;
     }
 
-    if(cameraDevice->setExposureTime(exposure) != royale::CameraStatus::SUCCESS)
+    if(cameraDevice->setExposureTime(exposure, streamId) != royale::CameraStatus::SUCCESS)
     {
       OUT_ERROR("could not set exposure time!");
       return false;

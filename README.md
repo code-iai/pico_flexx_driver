@@ -81,9 +81,17 @@ The launch file has the following parameters:
 
   Enable or disable automatic exposure.
 
+- `automatic_exposure_stream2` (default="true"):
+
+  Enable or disable automatic exposure for stream 2.
+
 - `exposure_time` (default="1000"):
 
   Exposure time. Only for manual exposure.
+
+- `exposure_time_stream2` (default="1000"):
+
+  Exposure time for stream 2. Only for manual exposure.
 
 - `max_noise` (default="0.07"):
 
