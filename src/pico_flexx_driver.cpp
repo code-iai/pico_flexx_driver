@@ -858,8 +858,8 @@ private:
     msgCloud->width = data.width;
     msgCloud->is_bigendian = false;
     msgCloud->is_dense = false;
-    msgCloud->point_step = (uint32_t)(5 * sizeof(float));
-    msgCloud->row_step = (uint32_t)(5 * sizeof(float) * data.width);
+    msgCloud->point_step = (uint32_t)(4 * sizeof(float) + sizeof(u_int16_t) + sizeof(u_int8_t));
+    msgCloud->row_step = (uint32_t)(msgCloud->point_step * data.width);
     msgCloud->fields.resize(6);
     msgCloud->fields[0].name = "x";
     msgCloud->fields[0].offset = 0;
@@ -885,21 +885,22 @@ private:
     msgCloud->fields[5].offset = msgCloud->fields[4].offset + (uint32_t)sizeof(uint16_t);
     msgCloud->fields[5].datatype = sensor_msgs::PointField::UINT8;
     msgCloud->fields[5].count = 1;
-    msgCloud->data.resize(5 * sizeof(float) * data.points.size());
+    msgCloud->data.resize(msgCloud->point_step * data.points.size());
 
     const float invalid = std::numeric_limits<float>::quiet_NaN();
     const float maxNoise = (float)config.max_noise;
     const royale::DepthPoint *itI = &data.points[0];
-    float *itCX = (float *)&msgCloud->data[0];
-    float *itCY = itCX + 1;
-    float *itCZ = itCY + 1;
-    float *itCN = itCZ + 1;
-    uint16_t *itCM = (uint16_t *)(itCN + 1);
     float *itD = (float *)&msgDepth->data[0];
     float *itN = (float *)&msgNoise->data[0];
     uint16_t *itM = (uint16_t *)&msgMono16->data[0];
-    for(size_t i = 0; i < data.points.size(); ++i, ++itI, itCX += 5, itCY += 5, itCZ += 5, itCN += 5, itCM += 10, ++itD, ++itM, ++itN)
+    for(size_t i = 0; i < data.points.size(); ++i, ++itI, ++itD, ++itM, ++itN)
     {
+      float *itCX = (float *)&msgCloud->data[i * msgCloud->point_step];
+      float *itCY = itCX + 1;
+      float *itCZ = itCY + 1;
+      float *itCN = itCZ + 1;                    // "noise" field
+      uint16_t *itCM = (uint16_t *)(itCN + 1);   // "intensity" field
+
       if(itI->depthConfidence && itI->noise < maxNoise)
       {
         *itCX = itI->x;
@@ -969,9 +970,9 @@ private:
     const uint16_t maxV = (uint16_t)(std::min(average + config.range_factor * deviation, 65535.0) - minV);
     const double maxVF = 255.0 / (double)maxV;
     uint8_t *itO = pMono8;
-    uint8_t *itP = ((uint8_t *)&msgCloud->data[0]) + 18;
+    uint8_t *itP = ((uint8_t *)&msgCloud->data[0]) + 4 * sizeof(float) + sizeof(u_int16_t);   // "gray" field
     itI = pMono16;
-    for(size_t i = 0; i < size; ++i, ++itI, ++itO, itP += 20)
+    for(size_t i = 0; i < size; ++i, ++itI, ++itO, itP += msgCloud->point_step)
     {
       uint16_t v = *itI;
       if(v < minV)
