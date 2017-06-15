@@ -748,8 +748,22 @@ private:
     OUT_INFO("use case changed to: " FG_YELLOW << useCases[idx]);
 
     std::string name = royale::String::toStdString(useCases[idx]);
-    size_t end = name.find("FPS");
-    size_t start = name.rfind('_', end);
+    size_t start, end;
+
+    // handle MODE_9_5FPS_2000 etc.
+    end = name.find("FPS");
+    start = name.rfind('_', end);
+    if (start != std::string::npos)
+      start += 1;
+
+    if(end == std::string::npos || start == std::string::npos)
+    {
+      // handle MODE_MIXED_30_5, MODE_MIXED_50_5
+      start = name.find("MIXED_");
+      if (start != std::string::npos)
+        start += 6;
+      end = name.find("_", start);
+    }
 
     if(end == std::string::npos || start == std::string::npos)
     {
@@ -759,7 +773,6 @@ private:
       lockTiming.unlock();
       return true;
     }
-    start += 1;
 
     std::string fpsString = name.substr(start, end - start);
     if(fpsString.find_first_not_of("0123456789") != std::string::npos)
