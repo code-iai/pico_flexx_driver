@@ -747,8 +747,7 @@ private:
     }
     OUT_INFO("use case changed to: " FG_YELLOW << useCases[idx]);
 
-    std::string name;
-    useCases[idx].toStdString(name);
+    std::string name = royale::String::toStdString(useCases[idx]);
     size_t end = name.find("FPS");
     size_t start = name.rfind('_', end);
 
