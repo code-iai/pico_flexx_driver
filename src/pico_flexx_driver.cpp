@@ -347,6 +347,15 @@ public:
         return;
       }
       this->config.use_case = config.use_case;
+
+      // Need to explicitly set these parameters because of the following sequence of calls:
+      // - setUseCase() above causes the driver to change the exposure times
+      // - onNewExposure() is triggered, updates this->config
+      // - server.updateConfig() correctly sets the new params
+      // - execution returns here; without the following two lines, the values on the server
+      //   would be reset to the stale values in config on return from this function
+      config.exposure_time = this->config.exposure_time;
+      config.exposure_time_stream2 = this->config.exposure_time_stream2;
     }
 
     if(level & 0x02)
