@@ -14,6 +14,8 @@ Confirmed working for:
 
 as of June 03, 2017
 
+*This is a temporary repo, maintainer seems to have dropped responsibility*
+
 ## Table of contents
 - [Description](#description)
 - [Dependencies](#dependencies)
