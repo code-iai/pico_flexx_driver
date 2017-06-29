@@ -81,9 +81,17 @@ The launch file has the following parameters:
 
   Enable or disable automatic exposure.
 
+- `automatic_exposure_stream2` (default="true"):
+
+  Enable or disable automatic exposure for stream 2.
+
 - `exposure_time` (default="1000"):
 
   Exposure time. Only for manual exposure.
+
+- `exposure_time_stream2` (default="1000"):
+
+  Exposure time for stream 2. Only for manual exposure.
 
 - `max_noise` (default="0.07"):
 
@@ -128,11 +136,11 @@ Some parameters can be reconfigured during runtime, for example with `rosrun rqt
 
   Choose from a list of use cases.
 
-- `exposure_mode`:
+- `exposure_mode`, `exposure_mode_stream2`:
 
   `AUTOMATIC` or `MANUAL`.
 
-- `exposure_time`:
+- `exposure_time`, `exposure_time_stream2`:
 
   Exposure time. Only for manual exposure.
 
@@ -145,6 +153,14 @@ Some parameters can be reconfigured during runtime, for example with `rosrun rqt
   Range of the 16-Bit mono image which should be mapped to the 0-255 range of the 8-Bit mono image. The resulting range is `range_factor` times the standard deviation around mean.
 
 #### Topics
+
+When a mixed mode use case is selected, the second stream for all topics below
+is published under the `stream2` namespace (e.g.,
+`/pico_flexx/stream2/points`). In mixed mode, both a low-range, high-noise,
+high-frequency point cloud and a high-range, low-noise, low-frequency (5 Hz)
+point cloud are published. The 5 Hz point cloud in mixed mode only allows a
+maximum exposure time of 1300 microseconds, so it has slightly higher noise
+than the 5 Hz point cloud in single mode at 2000 microseconds.
 
 ##### `/pico_flexx/camera_info`
 Bandwidth: 0.37 KB per message (@5 Hz: ~2 KB/s, @45 Hz: ~ 17 KB/s)
@@ -172,7 +188,7 @@ Bandwidth: 153.28 KB per message (@5 Hz: ~766 KB/s, @45 Hz: ~ 6897 KB/s)
 This is the distorted noise image. It is a 32-Bit float image where each pixel is a noise value of the corresponding depth pixel measured in meters.
 
 ##### `/pico_flexx/points`
-Bandwidth: 770 KB per message (@5 Hz: ~3850 KB/s, @45 Hz: ~ 34650 KB/s)
+Bandwidth: 720 KB per message (@5 Hz: ~3600 KB/s, @45 Hz: ~ 32400 KB/s)
 
 This is the point cloud created by the sensor. It contains 6 fields in the following order: X, Y, Z, Noise (float), Intensity (16-Bit), Gray (8-Bit).
 The 3D points themselves are undistorted, while the 2D coordinates of the points are distorted. The point cloud is organized, so that the each point belongs to the pixel with the same index in one of the other images.
