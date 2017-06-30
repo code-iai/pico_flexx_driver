@@ -6,6 +6,16 @@
 
 - [Thiemo Wiedemeyer](https://ai.uni-bremen.de/team/thiemo_wiedemeyer) <<wiedemeyer@cs.uni-bremen.de>>, [Institute for Artificial Intelligence](https://ai.uni-bremen.de/), University of Bremen
 
+## Status
+Confirmed working for:
+- Ubuntu 16.04.
+- Picoflexx driver v3.0.1.122
+- ROS Kinetic
+
+as of June 03, 2017
+
+*This is a temporary repo, maintainer seems to have dropped responsibility*
+
 ## Table of contents
 - [Description](#description)
 - [Dependencies](#dependencies)
