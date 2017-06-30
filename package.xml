@@ -4,7 +4,8 @@
   <version>0.0.0</version>
   <description>ROS driver for the pmd CamBoard pico flexx</description>
 
-  <maintainer email="wiedemeyer@cs.uni-bremen.de">Thiemo Wiedemeyer</maintainer>
+  <maintainer email="amaldo@cs.uni-bremen.de">Alexis Maldonado</maintainer>
+  <maintainer email="martin.guenther@dfki.de">Martin Günther</maintainer>
 
   <license>GPLv3</license>
 
