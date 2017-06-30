@@ -698,10 +698,10 @@ private:
       uint16_t maxSensorHeight;
       cameraDevice->getMaxSensorHeight(maxSensorHeight);
       OUT_INFO("height: " FG_CYAN << maxSensorHeight << NO_COLOR);
-      OUT_INFO("fx: " FG_CYAN << params.principalPoint.first
-               << NO_COLOR ", fy: " FG_CYAN << params.principalPoint.second
-               << NO_COLOR ", cx: " FG_CYAN << params.focalLength.first
-               << NO_COLOR ", cy: " FG_CYAN << params.focalLength.second << NO_COLOR);
+      OUT_INFO("fx: " FG_CYAN << params.focalLength.first
+               << NO_COLOR ", fy: " FG_CYAN << params.focalLength.second
+               << NO_COLOR ", cx: " FG_CYAN << params.principalPoint.first
+               << NO_COLOR ", cy: " FG_CYAN << params.principalPoint.second << NO_COLOR);
       if(params.distortionRadial.size() == 3)
       {
         OUT_INFO("k1: " FG_CYAN << params.distortionRadial[0]
