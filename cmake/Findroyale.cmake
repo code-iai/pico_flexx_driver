@@ -7,6 +7,7 @@ if(ERROR_CODE EQUAL 0)
     string(REPLACE "\n" ";" PATHS_LIST ${PATHS_STRING})
 
     # store CXX flags to override the settings from royale later
+    # The royale sdk cmake file overrides the variable CMAKE_CXX_FLAGS
     set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
 
     find_package(royale REQUIRED
@@ -14,6 +15,10 @@ if(ERROR_CODE EQUAL 0)
       NO_DEFAULT_PATH
     )
 
+    # also remove CMAKE_CXX_FLAGS from the cache, 
+    # or the changes done by find_package(royale) could show up later again
+    unset(CMAKE_CXX_FLAGS CACHE)
+    # get the untouched CXX_FLAGS
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
   endif()
 endif()
