@@ -7,8 +7,8 @@
 - [Thiemo Wiedemeyer](https://ai.uni-bremen.de/team/thiemo_wiedemeyer) <<wiedemeyer@cs.uni-bremen.de>>, [Institute for Artificial Intelligence](https://ai.uni-bremen.de/), University of Bremen
 
 ## Maintainers
-- [Alexis Maldonado](https://ai.uni-bremen.de/team/alexis_maldonado) [Institute for Artificial Intelligence](https://ai.uni-bremen.de/), University of Bremen
-- [Martin Günther](http://robotik.dfki-bremen.de/de/ueber-uns/mitarbeiter/magu02.html) [Robotics Innovation Center (RIC), DFKI](http://robotik.dfki-bremen.de/de/startseite.html).
+- [Alexis Maldonado](https://ai.uni-bremen.de/team/alexis_maldonado), [Institute for Artificial Intelligence](https://ai.uni-bremen.de/), University of Bremen
+- [Martin Günther](http://robotik.dfki-bremen.de/de/ueber-uns/mitarbeiter/magu02.html), [Robotics Innovation Center (RIC), DFKI](http://robotik.dfki-bremen.de/de/startseite.html).
 
 
 ## Table of contents
