@@ -80,7 +80,7 @@ catkin_package(
 ###########
 
 # Display additional files in qtcreator
-execute_process(COMMAND find ${PROJECT_SOURCE_DIR} -type f ! -path "${PROJECT_SOURCE_DIR}/royale/*" OUTPUT_VARIABLE FILES_STRING)
+execute_process(COMMAND find -L ${PROJECT_SOURCE_DIR} -type f ! -path "${PROJECT_SOURCE_DIR}/royale/*" OUTPUT_VARIABLE FILES_STRING)
 string(REPLACE "\n" ";" FILES_LIST ${FILES_STRING})
 add_custom_target(additional_files_${PROJECT_NAME}
   SOURCES
