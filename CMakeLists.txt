@@ -19,6 +19,14 @@ ELSE()
   MESSAGE(ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 ENDIF()
 
+# Some versions of libroyale (e.g. 3.1.0.122) needed -march=native to work
+# Version 3.4.0.18 works fine without, but adding this should not hurt
+CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
+if (COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
+  set(additional_cxx_flags "${additional_cxx_flags} -march=native -O3")
+endif()
+
+
 set(CMAKE_MODULE_PATH   ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
 ## Find catkin macros and libraries
