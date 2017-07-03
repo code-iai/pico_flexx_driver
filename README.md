@@ -2,9 +2,14 @@
 
 ![pixo_flexx_ros](https://ai.uni-bremen.de/wiki/_media/software/pico_flexx_ros.png)
 
-## Maintainer
+## Author
 
 - [Thiemo Wiedemeyer](https://ai.uni-bremen.de/team/thiemo_wiedemeyer) <<wiedemeyer@cs.uni-bremen.de>>, [Institute for Artificial Intelligence](https://ai.uni-bremen.de/), University of Bremen
+
+## Maintainers
+- [Alexis Maldonado](https://ai.uni-bremen.de/team/alexis_maldonado) [Institute for Artificial Intelligence](https://ai.uni-bremen.de/), University of Bremen
+- [Martin Günther](http://robotik.dfki-bremen.de/de/ueber-uns/mitarbeiter/magu02.html) [Robotics Innovation Center (RIC), DFKI](http://robotik.dfki-bremen.de/de/startseite.html).
+
 
 ## Table of contents
 - [Description](#description)
@@ -24,12 +29,21 @@ Features:
 
 ## Dependencies
 
-- ROS Indigo (or newer should also work)
-- [Royale SDK](http://www.pmdtec.com/picoflexx/) (1.10.0.78 or newer)
+- ROS Indigo or Kinetic (or newer should also work)
+- [Royale SDK](http://www.pmdtec.com/picoflexx/) (latest version tested: 3.4.0.18)
+
+## Status
+
+The driver has been tested on:
+ - Ubuntu 14.04 and 16.04
+ - ROS Indigo and ROS Kinetic
+ - [Royale SDK](http://www.pmdtec.com/picoflexx/) (3.4.0.18, 3.1.0.122, and many older ones, but please try with the latest one first)
+
+
 
 ## Install
 
-1. Install the ROS. [Instructions for Ubuntu 14.04](http://wiki.ros.org/indigo/Installation/Ubuntu)
+1. Install the ROS. [Instructions for Ubuntu 16.04](http://wiki.ros.org/kinetic/Installation/Ubuntu)
 2. [Setup your ROS environment](http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment)
 3. Download the royale SDK from http://www.pmdtec.com/picoflexx/ and extract it
 4. Extract the linux 64 bit archive from the extracted SDK to `<catkin_ws>/src/pico_flexx_driver/royale`.
@@ -46,7 +60,7 @@ Features:
    sudo cp libroyale-<version_number>-LINUX-64Bit/driver/udev/10-royale-ubuntu.rules /etc/udev/rules.d/
    ```
 
-6. Run `catkin_make`
+6. Run `catkin_make` or `catkin build` (if you prefer catkin_tools)  
 7. Plug in the CamBoard pico flexx device
 8. Run `roslaunch pico_flexx_driver pico_flexx_driver.launch publish_tf:=true`
 9. Start `rosrun rviz rviz`, set the `Fixed frame` to `pico_flexx_link` and add a `PointCloud2` and select `/pico_flexx/points`
