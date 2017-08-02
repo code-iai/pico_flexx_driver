@@ -30,14 +30,14 @@ Features:
 ## Dependencies
 
 - ROS Indigo or Kinetic (or newer should also work)
-- [Royale SDK](http://www.pmdtec.com/picoflexx/) (latest version tested: 3.4.0.18)
+- [Royale SDK](http://www.pmdtec.com/picoflexx/) (latest version tested: libroyale-3.5.0.28-LINUX-x86-64Bit.zip on Aug-2017)
 
 ## Status
 
 The driver has been tested on:
  - Ubuntu 14.04 and 16.04
  - ROS Indigo and ROS Kinetic
- - [Royale SDK](http://www.pmdtec.com/picoflexx/) (3.4.0.18, 3.1.0.122, and many older ones, but please try with the latest one first)
+ - [Royale SDK](http://www.pmdtec.com/picoflexx/) (3.5.0.28, 3.4.0.18, 3.1.0.122, and many older ones, but please try with the latest one first)
 
 
 
