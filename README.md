@@ -30,20 +30,17 @@ Features:
 ## Dependencies
 
 - ROS Indigo or Kinetic (or newer should also work)
-- [Royale SDK](http://www.pmdtec.com/picoflexx/) (latest version tested: libroyale-3.5.0.28-LINUX-x86-64Bit.zip on Aug-2017)
+- [Royale SDK](http://www.pmdtec.com/picoflexx/)
 
 ## Status
 
 The driver has been tested on:
  - Ubuntu 14.04 and 16.04
  - ROS Indigo and ROS Kinetic
- - [Royale SDK](http://www.pmdtec.com/picoflexx/) (3.5.0.28, 3.4.0.18, 3.1.0.122, and many older ones, but please try with the latest one first)
-
-
 
 ## Install
 
-1. Install the ROS. [Instructions for Ubuntu 16.04](http://wiki.ros.org/kinetic/Installation/Ubuntu)
+1. Install ROS: [Instructions for Ubuntu 16.04](http://wiki.ros.org/kinetic/Installation/Ubuntu)
 2. [Setup your ROS environment](http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment)
 3. Download the royale SDK from http://www.pmdtec.com/picoflexx/ and extract it
 4. Extract the linux 64 bit archive from the extracted SDK to `<catkin_ws>/src/pico_flexx_driver/royale`.
@@ -60,7 +57,7 @@ The driver has been tested on:
    sudo cp libroyale-<version_number>-LINUX-64Bit/driver/udev/10-royale-ubuntu.rules /etc/udev/rules.d/
    ```
 
-6. Run `catkin_make` or `catkin build` (if you prefer catkin_tools)  
+6. Run `catkin_make` or `catkin build` (if you prefer catkin_tools)
 7. Plug in the CamBoard pico flexx device
 8. Run `roslaunch pico_flexx_driver pico_flexx_driver.launch publish_tf:=true`
 9. Start `rosrun rviz rviz`, set the `Fixed frame` to `pico_flexx_link` and add a `PointCloud2` and select `/pico_flexx/points`
