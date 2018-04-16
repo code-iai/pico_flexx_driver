@@ -16,6 +16,7 @@
 - [Dependencies](#dependencies)
 - [Install](#install)
 - [Usage](#usage)
+- [Troubleshooting](#troubleshooting)
 
 ## Description
 This package is a ROS interface to the [CamBoard pico flexx](http://www.pmdtec.com/picoflexx/) from pmd.
@@ -203,3 +204,17 @@ Bandwidth: 720 KB per message (@5 Hz: ~3600 KB/s, @45 Hz: ~ 32400 KB/s)
 
 This is the point cloud created by the sensor. It contains 6 fields in the following order: X, Y, Z, Noise (float), Intensity (16-Bit), Gray (8-Bit).
 The 3D points themselves are undistorted, while the 2D coordinates of the points are distorted. The point cloud is organized, so that the each point belongs to the pixel with the same index in one of the other images.
+
+## Troubleshooting
+
+### Problems accessing two pico flexx at the same time
+
+When you try to access two (or more) pico flexx cameras simultaneously from different processes, you get this error when starting the second driver instance:
+
+```
+[PicoFlexx::selectCamera] no cameras connected!
+```
+
+However, you only get this error when accessing the cameras *from different processes*, i.e., by starting two instances of the `pico_flexx_driver` node, or by running two instances of the `pico_flexx_nodelet` in two *different* nodelet managers. This seems to be a limitation of libroyale. Also see issue [#13](https://github.com/code-iai/pico_flexx_driver/issues/13).
+
+**Workaround:** Start two instances of `pico_flexx_nodelet` in the *same* nodelet manager.
