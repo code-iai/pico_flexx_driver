@@ -44,18 +44,21 @@ The driver has been tested on:
 1. Install ROS: [Instructions for Ubuntu 16.04](http://wiki.ros.org/kinetic/Installation/Ubuntu)
 2. [Setup your ROS environment](http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment)
 3. Download the royale SDK from http://www.pmdtec.com/picoflexx/ and extract it
-4. Extract the linux 64 bit archive from the extracted SDK to `<catkin_ws>/src/pico_flexx_driver/royale`.
+4. Extract the archive that matches your kernel architecture from the extracted SDK to `<catkin_ws>/src/pico_flexx_driver/royale`. You can find out what your kernel architecture is by running `uname -m`.
 
    ```
    cd <catkin_ws>/src/pico_flexx_driver/royale
-   tar -xf <path_to_extracted_royale_sdk>/libroyale-<version_number>-LINUX-64Bit.tar.gz
+   tar -xf <path_to_extracted_royale_sdk>/libroyale-<version_number>-LINUX-x86-64Bit/   # uname -m = x86_64
+   # or:
+   tar -xf <path_to_extracted_royale_sdk>/libroyale-<version_number>-LINUX-arm-32Bit/   # uname -m = armv7l
+   # or...
    ```
 
 5. Install the udev rules provided by the SDK
 
    ```
    cd <catkin_ws>/src/pico_flexx_driver/royale
-   sudo cp libroyale-<version_number>-LINUX-64Bit/driver/udev/10-royale-ubuntu.rules /etc/udev/rules.d/
+   sudo cp libroyale-*/driver/udev/10-royale-ubuntu.rules /etc/udev/rules.d/
    ```
 
 6. Run `catkin_make` or `catkin build` (if you prefer catkin_tools)
