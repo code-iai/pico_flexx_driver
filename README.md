@@ -44,6 +44,10 @@ The driver has been tested on:
 1. Install ROS: [Instructions for Ubuntu 16.04](http://wiki.ros.org/kinetic/Installation/Ubuntu)
 2. [Setup your ROS environment](http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment)
 3. Download the royale SDK from http://www.pmdtec.com/picoflexx/ and extract it
+
+  * Ubuntu Trusty (ROS Indigo) requires libroyale version 3.11.0.42 or lower (see [#18](https://github.com/code-iai/pico_flexx_driver/issues/18)).
+  * Ubuntu Xenial should work with the newest version of libroyale.
+
 4. Extract the archive that matches your kernel architecture from the extracted SDK to `<catkin_ws>/src/pico_flexx_driver/royale`. You can find out what your kernel architecture is by running `uname -m`.
 
    ```
