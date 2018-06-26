@@ -52,9 +52,9 @@ The driver has been tested on:
 
    ```
    cd <catkin_ws>/src/pico_flexx_driver/royale
-   tar -xf <path_to_extracted_royale_sdk>/libroyale-<version_number>-LINUX-x86-64Bit/   # uname -m = x86_64
+   unzip <path_to_extracted_royale_sdk>/libroyale-<version_number>-LINUX-x86-64Bit.zip   # uname -m = x86_64
    # or:
-   tar -xf <path_to_extracted_royale_sdk>/libroyale-<version_number>-LINUX-arm-32Bit/   # uname -m = armv7l
+   unzip <path_to_extracted_royale_sdk>/libroyale-<version_number>-LINUX-arm-32Bit.zip   # uname -m = armv7l
    # or...
    ```
 
