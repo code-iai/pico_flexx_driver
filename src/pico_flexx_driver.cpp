@@ -420,6 +420,18 @@ public:
       lockStatus.unlock();
     }
 
+    if(level & (0x01 | 0x80))
+    {
+      // setting use case resets filter level, so we have to do it again here
+      OUT_INFO("reconfigured filter_level: " << FG_CYAN << config.filter_level << NO_COLOR);
+      if (setFilterLevel(config.filter_level))
+      {
+        this->config.filter_level = config.filter_level;
+      } else {
+        config.filter_level = this->config.filter_level;
+      }
+    }
+
     if(level & (0x01 | 0x02 | 0x04))
     {
       royale::Pair<uint32_t, uint32_t> limits;
@@ -847,6 +859,48 @@ private:
 
     OUT_INFO("exposure time changed to: " FG_YELLOW << exposure);
     return true;
+  }
+
+  bool setFilterLevel(const int level, const royale::StreamId streamId = 0)
+  {
+#if (defined(royale_VERSION_MAJOR) && defined(royale_VERSION_MINOR) \
+     && (royale_VERSION_MAJOR > 3 || (royale_VERSION_MAJOR == 3 && royale_VERSION_MINOR >= 21)))
+    const royale::FilterLevel desiredLevel = (royale::FilterLevel) level;
+    royale::FilterLevel currentLevel;
+    if (cameraDevice->getFilterLevel(currentLevel) != royale::CameraStatus::SUCCESS)
+    {
+      OUT_ERROR("could not get filter level!");
+      return false;
+    }
+    OUT_INFO("current filter level: " << FG_CYAN << (int) currentLevel << NO_COLOR);
+    this->config.filter_level = (int) currentLevel;
+
+    if (desiredLevel == currentLevel)
+    {
+      OUT_INFO("filter level unchanged");
+      return false;
+    }
+    if (desiredLevel == royale::FilterLevel::Custom)
+    {
+      OUT_INFO("filter level 'Custom' can only be read, not set");
+      return false;
+    }
+    if (currentLevel == royale::FilterLevel::Custom)
+    {
+      OUT_INFO("current filter level is 'Custom', will not overwrite");
+      return false;
+    }
+    if (cameraDevice->setFilterLevel(desiredLevel, streamId) != royale::CameraStatus::SUCCESS)
+    {
+      OUT_ERROR("could not set filter level!");
+      return false;
+    }
+    OUT_INFO("filter level changed to: " << FG_YELLOW << (int) desiredLevel);
+    return true;
+#else
+    OUT_ERROR("setting the filter level requires royale >= 3.21!");
+    return false;
+#endif
   }
 
   bool createCameraInfo(const royale::LensParameters &params)

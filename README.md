@@ -31,7 +31,7 @@ Features:
 ## Dependencies
 
 - ROS Indigo or Kinetic (or newer should also work)
-- [Royale SDK](http://www.pmdtec.com/picoflexx/)
+- [Royale SDK](http://www.pmdtec.com/picoflexx/) (recommended: latest version, at least 3.21)
 
 ## Status
 
