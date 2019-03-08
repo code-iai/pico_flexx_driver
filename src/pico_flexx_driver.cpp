@@ -167,7 +167,7 @@ public:
     configMin.max_noise = 0.0;
     configMin.range_factor = 0.0;
 
-    configMax.use_case = 5;
+    configMax.use_case = 9;
     configMax.exposure_mode = 1;
     configMax.exposure_time = 2000;
     configMax.exposure_mode_stream2 = 1;
@@ -753,6 +753,21 @@ private:
     OUT_INFO("use case changed to: " FG_YELLOW << useCases[idx]);
 
     std::string name = royale::String::toStdString(useCases[idx]);
+
+    if (name == "Low_Noise_Extended")
+    {
+      lockTiming.lock();
+      framesPerTiming = 5;
+      lockTiming.unlock();
+      return true;
+    }
+    if (name == "Fast_Acquisition") {
+      lockTiming.lock();
+      framesPerTiming = 45;
+      lockTiming.unlock();
+      return true;
+    }
+
     size_t start, end;
 
     // handle MODE_9_5FPS_2000 etc.
