@@ -100,7 +100,7 @@ target_link_libraries(pico_flexx_nodelet
   ${catkin_LIBRARIES}
   ${royale_LIBRARIES}
 )
-add_dependencies(pico_flexx_nodelet ${PROJECT_NAME}_gencfg)
+add_dependencies(pico_flexx_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_compile_options(pico_flexx_nodelet PUBLIC ${cxx_flags})
 
 add_executable(pico_flexx_driver src/pico_flexx_driver.cpp)
@@ -108,7 +108,7 @@ target_link_libraries(pico_flexx_driver
   ${catkin_LIBRARIES}
   ${royale_LIBRARIES}
 )
-add_dependencies(pico_flexx_driver ${PROJECT_NAME}_gencfg)
+add_dependencies(pico_flexx_driver ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_compile_options(pico_flexx_driver PUBLIC ${cxx_flags})
 
 

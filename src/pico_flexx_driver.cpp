@@ -42,7 +42,6 @@
 #include <pico_flexx_driver/pico_flexx_driverConfig.h>
 
 #define PF_DEFAULT_NS       "pico_flexx"
-#define PF_TF_LINK          "_link"
 #define PF_TF_OPT_FRAME     "_optical_frame"
 #define PF_TOPIC_INFO       "/camera_info"
 #define PF_TOPIC_MONO8      "/image_mono8"
@@ -130,7 +129,8 @@ private:
   std::condition_variable cvNewData;
   bool running, newData;
   std::vector<bool> ignoreNewExposure;
-  uint64_t frame, framesPerTiming, processTime, delayReceived;
+  uint64_t frame, processTime, delayReceived;
+  int framesPerTiming;
   std::string baseNameTF;
   std::chrono::high_resolution_clock::time_point startTime;
   std::thread threadProcess;
@@ -202,7 +202,6 @@ public:
     running = false;
 
     threadProcess.join();
-    return;
   }
 
   void onNewData(const royale::DepthData *data)
@@ -771,7 +770,7 @@ private:
       start = name.find("MIXED_");
       if (start != std::string::npos)
         start += 6;
-      end = name.find("_", start);
+      end = name.find('_', start);
     }
 
     if(end == std::string::npos || start == std::string::npos)
@@ -1212,7 +1211,7 @@ private:
     {
       double timePerFrame, framesPerSecond, avgDelay;
 
-      timePerFrame = (double)(processTime / framesPerTiming) / 1000000.0;
+      timePerFrame = ((double)processTime / framesPerTiming) / 1000000.0;
       framesPerSecond = (double)framesPerTiming / ((double)(now - startTime).count() / 1000000000.0);
       avgDelay = ((double)delayReceived / (double)framesPerTiming) / 1000000.0;
 
