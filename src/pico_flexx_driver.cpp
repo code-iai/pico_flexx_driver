@@ -50,9 +50,6 @@
 #define PF_TOPIC_NOISE      "/image_noise"
 #define PF_TOPIC_CLOUD      "/points"
 
-// fix for royale sdk definitions
-#undef __PRETTY_FUNCTION__
-
 // Set this to '0' to disable the extended colored output
 #define EXTENDED_OUTPUT 1
 
