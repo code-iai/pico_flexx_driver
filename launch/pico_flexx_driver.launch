@@ -9,6 +9,12 @@
   <arg name="automatic_exposure" default="true"/>
   <!-- Exposure time. Only for manual exposure. -->
   <arg name="exposure_time"      default="1000"/>
+  <!-- Exposure mode (0 = manual, 1 = automatic) -->
+  <arg name="exposure_mode"      default="1"/>
+  <!-- Stream 2 Exposure time. Only for manual exposure. -->
+  <arg name="exposure_time_stream2" default="1000"/>
+  <!-- Stream 2 Exposure mode (0 = manual, 1 = automatic) -->
+  <arg name="exposure_mode_stream2"  default="1"/>
   <!-- Maximum allowed noise. Data with higher noise will be filtered out. -->
   <arg name="max_noise"          default="0.07"/>
   <!-- Range of the 16-Bit mono image which should be mapped to the 0-255 range of the 8-Bit mono image. The resulting range is `range_factor` times the standard deviation arround mean. -->
@@ -48,6 +54,9 @@
     <param name="use_case"           type="int"    value="$(arg use_case)"/>
     <param name="automatic_exposure" type="bool"   value="$(arg automatic_exposure)"/>
     <param name="exposure_time"      type="int"    value="$(arg exposure_time)"/>
+    <param name="exposure_mode"      type="int"    value="$(arg exposure_mode)"/>
+    <param name="exposure_time_stream2" type="int"    value="$(arg exposure_time_stream2)"/>
+    <param name="exposure_mode_stream2" type="int"    value="$(arg exposure_mode_stream2)"/>
     <param name="max_noise"          type="double" value="$(arg max_noise)"/>
     <param name="range_factor"       type="double" value="$(arg range_factor)"/>
     <param name="queue_size"         type="int"    value="$(arg queue_size)"/>
