@@ -23,7 +23,7 @@ ENDIF()
 # Version 3.4.0.18 works fine without, but adding this should not hurt
 CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
 if (COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
-  set(additional_cxx_flags "${additional_cxx_flags} -march=native -O3")
+  set(additional_cxx_flags "${additional_cxx_flags} -march=native")
 endif()
 
 
