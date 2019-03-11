@@ -204,7 +204,7 @@ This is the distorted IR image. It is a 8-Bit image where each pixel is an inten
 ##### `/pico_flexx/image_noise`
 Bandwidth: 153.28 KB per message (@5 Hz: ~766 KB/s, @45 Hz: ~ 6897 KB/s)
 
-This is the distorted noise image. It is a 32-Bit float image where each pixel is a noise value of the corresponding depth pixel measured in meters.
+This is the distorted noise image. It is a 32-Bit float image where each pixel is a noise value of the corresponding depth pixel (standard deviation, measured in meters).
 
 ##### `/pico_flexx/points`
 Bandwidth: 720 KB per message (@5 Hz: ~3600 KB/s, @45 Hz: ~ 32400 KB/s)
