@@ -151,29 +151,13 @@ public:
     status[0].resize(COUNT, false);
     status[1].resize(COUNT, false);
 
-    config.use_case = 0;
-    config.exposure_mode = 0;
-    config.exposure_time = 1000;
-    config.exposure_mode_stream2 = 0;
-    config.exposure_time_stream2 = 1000;
-    config.max_noise = 0.07;
-    config.range_factor = 2.0;
+    server.getConfigDefault(config);
 
-    configMin.use_case = 0;
-    configMin.exposure_mode = 0;
+    server.getConfigMin(configMin);
     configMin.exposure_time = 50;
-    configMin.exposure_mode_stream2 = 0;
     configMin.exposure_time_stream2 = 50;
-    configMin.max_noise = 0.0;
-    configMin.range_factor = 0.0;
 
-    configMax.use_case = 9;
-    configMax.exposure_mode = 1;
-    configMax.exposure_time = 2000;
-    configMax.exposure_mode_stream2 = 1;
-    configMax.exposure_time_stream2 = 2000;
-    configMax.max_noise = 0.10;
-    configMax.range_factor = 7.0;
+    server.getConfigMax(configMax);
   }
 
   ~PicoFlexx()
