@@ -52,6 +52,7 @@ string(REPLACE " " ";" cxx_flags "${CMAKE_CXX_FLAGS} ${additional_cxx_flags}")
 MESSAGE( STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
 MESSAGE( STATUS "additional_cxx_flags: " ${additional_cxx_flags})
 MESSAGE( STATUS "cxx_flags: ${cxx_flags}")
+MESSAGE( STATUS "royale version: ${royale_VERSION}")
 
 
 ################################################
@@ -102,6 +103,7 @@ target_link_libraries(pico_flexx_nodelet
 )
 add_dependencies(pico_flexx_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_compile_options(pico_flexx_nodelet PUBLIC ${cxx_flags})
+target_compile_definitions(pico_flexx_nodelet PUBLIC royale_VERSION_MAJOR=${royale_VERSION_MAJOR} royale_VERSION_MINOR=${royale_VERSION_MINOR})
 
 add_executable(pico_flexx_driver src/pico_flexx_driver.cpp)
 target_link_libraries(pico_flexx_driver
@@ -110,6 +112,7 @@ target_link_libraries(pico_flexx_driver
 )
 add_dependencies(pico_flexx_driver ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_compile_options(pico_flexx_driver PUBLIC ${cxx_flags})
+target_compile_definitions(pico_flexx_driver PUBLIC royale_VERSION_MAJOR=${royale_VERSION_MAJOR} royale_VERSION_MINOR=${royale_VERSION_MINOR})
 
 
 
