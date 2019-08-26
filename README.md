@@ -65,10 +65,18 @@ The driver has been tested on:
    sudo cp libroyale-*/driver/udev/10-royale-ubuntu.rules /etc/udev/rules.d/
    ```
 
-6. Run `catkin_make` or `catkin build` (if you prefer catkin_tools)
-7. Plug in the CamBoard pico flexx device
-8. Run `roslaunch pico_flexx_driver pico_flexx_driver.launch publish_tf:=true`
-9. Start `rosrun rviz rviz`, set the `Fixed frame` to `pico_flexx_link` and add a `PointCloud2` and select `/pico_flexx/points`
+6. Make sure that your user is in the `plugdev` group (you can use the command `groups` to check). If not, you need to add your user to the group:
+
+   ```
+   sudo usermod -a -G plugdev <your-user-name-here>
+   ```
+
+   Afterwards, you have to log out and log back in for the changes to take effect.
+
+7. Run `catkin_make` or `catkin build` (if you prefer catkin_tools)
+8. Plug in the CamBoard pico flexx device
+9. Run `roslaunch pico_flexx_driver pico_flexx_driver.launch publish_tf:=true`
+10. Start `rosrun rviz rviz`, set the `Fixed frame` to `pico_flexx_link` and add a `PointCloud2` and select `/pico_flexx/points`
 
 *Note: The pico_flexx_driver automatically tries to use the most recent version that is extracted in `<catkin_ws>/src/pico_flexx_driver/royale`.
 To use a newer release just extract it to that directory in addition to the previous one and recompile it with `catkin_make clean` and `catkin_make`.
