@@ -22,6 +22,10 @@
   <depend>std_msgs</depend>
   <depend>dynamic_reconfigure</depend>
 
+  <build_depend>libusb-1.0-dev</build_depend>
+  <build_export_depend>libusb-1.0-dev</build_export_depend>
+  <exec_depend>libusb-1.0</exec_depend>
+
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
