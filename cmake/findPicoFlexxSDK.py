@@ -1,6 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/python3
+from __future__ import print_function
 
-import os, sys
+import os
+import sys
 
 class SDK:
   def __init__(self, directory, version):
@@ -41,20 +43,20 @@ def findSDKs(path):
 
 if __name__ == "__main__":
   if len(sys.argv) != 2:
-    print >> sys.stderr, "no search directory given as first argument!"
+    print("no search directory given as first argument!", file=sys.stderr)
     sys.exit(-1)
 
   path = sys.argv[1]
   if not os.path.exists(path) or not os.path.isdir(path):
-    print >> sys.stderr, "argument is not a valid directory!"
+    print("argument is not a valid directory!", file=sys.stderr)
     sys.exit(-1)
 
   sdks = findSDKs(path)
   if len(sdks) == 0:
-    print >> sys.stderr, "no SDKs found!"
+    print("no SDKs found!", file=sys.stderr)
     sys.exit(-1)
 
   for sdk in sdks:
-    print os.path.abspath(sdk.directory)
+    print(os.path.abspath(sdk.directory))
 
   sys.exit(0)
