@@ -35,6 +35,8 @@
   <arg name="nodelet_manager"    default="$(arg base_name)"/>
   <!-- Whether to start a nodelet manager our not. Disable this if a different nodelet manager should be used. -->
   <arg name="start_manager"      default="true"/>
+  <!-- Whethre restarting nodelet manager and nodelet clients. If respawn is false, nodelet bond is disabled too -->
+  <arg name="respawn"            default="true"/>
 
   <!-- Default machine definition. -->
   <machine name="localhost" address="localhost" if="$(arg define_machine)"/>
@@ -45,12 +47,13 @@
 
   <!-- Nodelet manager. -->
   <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager)" args="manager"
-        if="$(arg start_manager)" machine="$(arg machine)" output="screen"/>
+        if="$(arg start_manager)" machine="$(arg machine)" output="screen"
+        respawn="$(arg respawn)"/>
 
   <!-- pico_flexx_driver nodelet. -->
   <node pkg="nodelet" type="nodelet" name="$(arg base_name)_driver" machine="$(arg machine)"
-        args="load pico_flexx_driver/pico_flexx_nodelet $(arg nodelet_manager)"
-        respawn="true" output="screen">
+        args="load pico_flexx_driver/pico_flexx_nodelet $(arg nodelet_manager) $(arg respawn)"
+        respawn="$(arg respawn)" output="screen">
     <param name="base_name"          type="str"    value="$(arg base_name)"/>
     <param name="sensor"             type="str"    value="$(arg sensor)"/>
     <param name="use_case"           type="int"    value="$(arg use_case)"/>
