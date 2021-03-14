@@ -35,7 +35,7 @@
   <arg name="nodelet_manager"    default="$(arg base_name)"/>
   <!-- Whether to start a nodelet manager our not. Disable this if a different nodelet manager should be used. -->
   <arg name="start_manager"      default="true"/>
-  <!-- Whethre restarting nodelet manager and nodelet clients. If respawn is false, nodelet bond is disabled too -->
+  <!-- Whether to restart nodelet manager and nodelet clients after crash/shutdown. If respawn is false, nodelet bond is disabled too. -->
   <arg name="respawn"            default="true"/>
 
   <!-- Default machine definition. -->
