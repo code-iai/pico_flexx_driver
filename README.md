@@ -8,7 +8,7 @@
 
 ## Maintainers
 - [Alexis Maldonado](https://ai.uni-bremen.de/team/alexis_maldonado), [Institute for Artificial Intelligence](https://ai.uni-bremen.de/), University of Bremen
-- [Martin Günther](http://robotik.dfki-bremen.de/de/ueber-uns/mitarbeiter/magu02.html), [Robotics Innovation Center (RIC), DFKI](http://robotik.dfki-bremen.de/de/startseite.html).
+- [Martin Günther](https://www.dfki.de/en/web/about-us/employee/person/magu02/), [Plan-Based Robot Control, DFKI](https://www.dfki.de/en/web/research/research-departments/plan-based-robot-control).
 
 
 ## Table of contents
@@ -36,18 +36,14 @@ Features:
 ## Status
 
 The driver has been tested on:
- - Ubuntu 14.04 and 16.04
- - ROS Indigo and ROS Kinetic
+ - Ubuntu 14.04, 16.04, 18.04, 20.04
+ - ROS Indigo, Kinetic, Melodic, Noetic
 
 ## Install
 
-1. Install ROS: [Instructions for Ubuntu 16.04](http://wiki.ros.org/kinetic/Installation/Ubuntu)
-2. [Setup your ROS environment](http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment)
-3. Download the royale SDK from http://www.pmdtec.com/picoflexx/ and extract it
-
-  * Ubuntu Trusty (ROS Indigo) requires libroyale version 3.11.0.42 or lower (see [#18](https://github.com/code-iai/pico_flexx_driver/issues/18)).
-  * Ubuntu Xenial should work with the newest version of libroyale.
-
+1. Install ROS: [Instructions for Ubuntu 20.04](https://wiki.ros.org/noetic/Installation/Ubuntu)
+2. [Setup your ROS environment](https://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment)
+3. Download the royale SDK from https://pmdtec.com/picofamily/software/ and extract it
 4. Extract the archive that matches your kernel architecture from the extracted SDK to `<catkin_ws>/src/pico_flexx_driver/royale`. You can find out what your kernel architecture is by running `uname -m`.
 
    ```
@@ -232,4 +228,4 @@ When you try to access two (or more) pico flexx cameras simultaneously from diff
 
 However, you only get this error when accessing the cameras *from different processes*, i.e., by starting two instances of the `pico_flexx_driver` node, or by running two instances of the `pico_flexx_nodelet` in two *different* nodelet managers. This seems to be a limitation of libroyale. Also see issue [#13](https://github.com/code-iai/pico_flexx_driver/issues/13).
 
-**Workaround:** Start two instances of `pico_flexx_nodelet` in the *same* nodelet manager.
+**Workaround:** Start all instances of `pico_flexx_nodelet` in the *same* nodelet manager.
