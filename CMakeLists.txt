@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5.2)
 project(pico_flexx_driver)
 
 set(additional_cxx_flags "-DBT_USE_DOUBLE_PRECISION")
